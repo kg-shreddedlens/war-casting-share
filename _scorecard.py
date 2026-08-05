@@ -154,6 +154,18 @@ def risk_normalize(raw: int) -> int:
     return int(round((raw / 70) * 100))
 
 
+def risk_clearance(risk_norm: int) -> int:
+    """Higher = cleaner. Inverse of red-flag normalized risk."""
+    return clamp(100 - int(risk_norm), 0, 100)
+
+
+def norm100(subtotal: float, max_pts: float) -> int:
+    """Map a weighted subtotal onto 0–100 (higher better)."""
+    if max_pts <= 0:
+        return 0
+    return int(round(max(0.0, min(100.0, (float(subtotal) / float(max_pts)) * 100.0))))
+
+
 def roi_from_cost_value(cost_scores: list[int], value_scores: list[int]) -> tuple[int, float, float]:
     cost_sub = sum(weighted(s, w) for (_, w, _), s in zip(SECTION3_COST, cost_scores))
     value_sub = sum(weighted(s, w) for (_, w, _), s in zip(SECTION3_VALUE, value_scores))
@@ -407,37 +419,44 @@ def justify_section1(
     return f"Scored {score}/10 against the rubric for this category."
 
 
-def justify_section2(name: str, score: int, row: dict) -> str:
-    """Risk index: lower is better — explain why this flag scored N/10."""
+def justify_section2(name: str, score: int, row: dict, *, clearance: int | None = None) -> str:
+    """Risk clearance display: higher is better. `score` is the raw red-flag (lower better)."""
     avail = (row.get("Avail risk") or "").lower()
     flags = _flags(row)
     fee = _fee(row)
+    clear = 10 - int(score) if clearance is None else int(clearance)
 
     if score <= 1:
-        return f"No material {name.lower()} signal on the current shortlist read — kept at floor risk."
+        return (
+            f"Clearance {clear}/10 — no material {name.lower()} signal on the current shortlist read."
+        )
     if score == 2:
-        return f"Minor {name.lower()} watch only; not enough to block, but logged for diligence."
+        return (
+            f"Clearance {clear}/10 — minor {name.lower()} watch only; logged for diligence, not a block."
+        )
     if name == "Scheduling Conflicts":
         if "high" in avail:
-            return "Avail risk flagged High — schedule reliability is a real packaging concern."
+            return f"Clearance {clear}/10 — avail risk flagged High; schedule reliability needs buffers."
         if "med" in avail:
-            return "Medium availability risk — dates may need buffers or alternate holds."
-        return f"Some schedule friction implied; scored {score}/10 until calendars clear."
+            return f"Clearance {clear}/10 — medium availability risk; dates may need alternate holds."
+        return f"Clearance {clear}/10 — some schedule friction until calendars clear."
     if name == "Public Image / PR Risk" or name == "Press Volatility":
         if "press" in flags:
-            return "Press flag on the shortlist — PR screening required before soft-offer."
-        return f"Elevated press/image sensitivity for this profile; scored {score}/10 as a watch item."
+            return f"Clearance {clear}/10 — press flag on the shortlist; PR screening before soft-offer."
+        return f"Clearance {clear}/10 — elevated press/image sensitivity for this profile."
     if name == "Typecasting / Mismatch":
         if "familiarity" in flags:
-            return "Familiarity helps sales but can typecast; score reflects tonal mismatch risk if the brand is too loud."
-        return f"Some incongruence with tone or prior roles; scored {score}/10 until materials prove the pivot."
+            return (
+                f"Clearance {clear}/10 — familiarity helps sales but can typecast if the brand is too loud."
+            )
+        return f"Clearance {clear}/10 — some incongruence with tone or prior roles until materials prove the pivot."
     if name == "Market Decline":
         if "extremely" in fee or ("high" in fee and "med" not in fee.replace(" ", "")):
-            return "High fee against uncertain heat — market/value fatigue is the risk being priced."
-        return f"Mild relevance/fatigue concern; scored {score}/10."
+            return f"Clearance {clear}/10 — high fee against uncertain heat; market fatigue is priced in."
+        return f"Clearance {clear}/10 — mild relevance/fatigue concern."
     if name == "Representation Issues":
-        return "Negotiation or access friction possible; not a hard no, but plan for slower paper."
-    return f"Elevated {name.lower()} reading at {score}/10 — mitigate before lock."
+        return f"Clearance {clear}/10 — negotiation/access friction possible; plan for slower paper."
+    return f"Clearance {clear}/10 — {name.lower()} needs mitigation before lock."
 
 
 def justify_section3_cost(name: str, score: int, row: dict) -> str:
@@ -524,7 +543,10 @@ def build_full_scorecard(
         )
         for (name, _w, prompt), score in zip(SECTION1, s1)
     ]
-    s2_why = [justify_section2(name, score, row) for (name, _p), score in zip(SECTION2, s2)]
+    s2_why = [
+        justify_section2(name, score, row, clearance=10 - score)
+        for (name, _p), score in zip(SECTION2, s2)
+    ]
     cost_why = [
         justify_section3_cost(name, score, row)
         for (name, _w, _p), score in zip(SECTION3_COST, cost)
@@ -533,15 +555,21 @@ def build_full_scorecard(
         justify_section3_value(name, score, row)
         for (name, _w, _p), score in zip(SECTION3_VALUE, value)
     ]
+    clearance = risk_clearance(risk_norm)
+    cost_100 = norm100(cost_sub, 35)
+    value_100 = norm100(value_sub, 65)
 
     return {
         "creative": creative,
         "risk_raw": raw_risk,
         "risk_norm": risk_norm,
+        "risk_clearance": clearance,
         "risk_level": level,
         "roi": roi,
         "cost_sub": cost_sub,
         "value_sub": value_sub,
+        "cost_100": cost_100,
+        "value_100": value_100,
         "verdict": verdict,
         "note": note,
         "section1": s1,
@@ -556,7 +584,7 @@ def build_full_scorecard(
         "roi_delta_usd": delta,
         "roi_uplift_pct": uplift_pct,
         "composite": (
-            f"Creative {creative}/100 · Risk {risk_norm}/100 ({level}) · ROI {roi}/100"
+            f"Creative {creative}/100 · Risk clearance {clearance}/100 ({level} residual) · ROI {roi}/100"
         ),
     }
 
@@ -609,10 +637,19 @@ def section1_rows_html(scores: list[int], whys: list[str] | None = None) -> str:
 
 
 def section2_rows_html(scores: list[int], whys: list[str] | None = None) -> str:
+    """Display risk as clearance (10 − raw) so higher is better."""
     rows = []
     whys = whys or []
     for i, ((name, prompt), score) in enumerate(zip(SECTION2, scores)):
-        rows.append(sc_row(name, prompt, score, why=whys[i] if i < len(whys) else ""))
+        clearance = 10 - int(score)
+        rows.append(
+            sc_row(
+                name,
+                prompt,
+                clearance,
+                why=whys[i] if i < len(whys) else "",
+            )
+        )
     return "\n".join(rows)
 
 
@@ -670,43 +707,47 @@ def full_scorecard_html(card: dict) -> str:
     c3 = section3_rows_html(SECTION3_COST, card["section3_cost"], card.get("section3_cost_why"))
     v3 = section3_rows_html(SECTION3_VALUE, card["section3_value"], card.get("section3_value_why"))
 
+    cost_100 = card.get("cost_100", norm100(card["cost_sub"], 35))
+    value_100 = card.get("value_100", norm100(card["value_sub"], 65))
+    clearance = card.get("risk_clearance", risk_clearance(card["risk_norm"]))
+
     p1 = sc_panel(
         "Section 1 · Creative + Commercial Fit",
-        "100 pts total. Weighted = Score × Weight ÷ 10.",
+        "Normalized /100. Higher is better. Row scores /10 · Weighted = Score × Weight ÷ 10.",
         s1,
-        "Total Weighted Score",
+        "Creative total",
         f"<strong>{card['creative']}</strong><span class='sc-foot-den'>/100</span>",
         badge=f"<span class='sc-badge-n'>{card['creative']}</span><span class='sc-badge-den'>/100</span>",
     )
     p2 = sc_panel(
-        "Section 2 · Red Flags Risk Index",
-        "Lower is better. Raw /70 → normalized /100. High scores require mitigation.",
+        "Section 2 · Risk Clearance",
+        "Normalized /100. Higher is better (cleaner attach). Row scores are clearance /10.",
         s2,
-        "Total Red Flag Score",
+        "Risk clearance",
         (
-            f"<strong>{card['risk_raw']}</strong><span class='sc-foot-den'>/70</span>"
-            f"<span class='sc-foot-extra'> · {card['risk_norm']}/100 · {escape(card['risk_level'])} Risk</span>"
+            f"<strong>{clearance}</strong><span class='sc-foot-den'>/100</span>"
+            f"<span class='sc-foot-extra'> · {escape(card['risk_level'])} residual risk</span>"
         ),
         badge=(
-            f"<span class='sc-badge-n'>{card['risk_norm']}</span>"
+            f"<span class='sc-badge-n'>{clearance}</span>"
             f"<span class='sc-badge-den'>/100</span>"
         ),
     )
     p3a = sc_panel(
-        "Section 3a · Cost Dimensions",
-        "0 = very expensive/painful · 10 = extremely low-cost/easy. Max subtotal 35.",
+        "Section 3a · Cost Efficiency",
+        "Normalized /100. Higher is better (cheaper / easier). Row scores /10 · easy = 10.",
         c3,
-        "Cost Subtotal",
-        f"<strong>{card['cost_sub']:g}</strong><span class='sc-foot-den'>/35</span>",
-        badge=f"<span class='sc-badge-n'>{card['cost_sub']:g}</span><span class='sc-badge-den'>/35</span>",
+        "Cost efficiency",
+        f"<strong>{cost_100}</strong><span class='sc-foot-den'>/100</span>",
+        badge=f"<span class='sc-badge-n'>{cost_100}</span><span class='sc-badge-den'>/100</span>",
     )
     p3b = sc_panel(
-        "Section 3b · Value Dimensions",
-        "0 = adds no value · 10 = extremely valuable. Max subtotal 65.",
+        "Section 3b · Value Index",
+        "Normalized /100. Higher is better. Row scores /10 · valuable = 10.",
         v3,
-        "Value Subtotal",
-        f"<strong>{card['value_sub']:g}</strong><span class='sc-foot-den'>/65</span>",
-        badge=f"<span class='sc-badge-n'>{card['value_sub']:g}</span><span class='sc-badge-den'>/65</span>",
+        "Value index",
+        f"<strong>{value_100}</strong><span class='sc-foot-den'>/100</span>",
+        badge=f"<span class='sc-badge-n'>{value_100}</span><span class='sc-badge-den'>/100</span>",
     )
 
     return f"""

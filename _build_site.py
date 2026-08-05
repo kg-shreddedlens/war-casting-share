@@ -562,10 +562,19 @@ a{color:var(--ink)}a:hover{color:var(--accent)}
 .icon-link svg{width:14px;height:14px;display:block;flex-shrink:0}
 .icon-link .lbl{line-height:1;white-space:nowrap}
 .roi-box{border:1px solid var(--ink);border-radius:var(--radius);padding:18px 20px;margin:0;background:#fff}
-.roi-box h3{font-family:"Bebas Neue",sans-serif;font-size:1.55rem;margin:0 0 10px;letter-spacing:.03em;line-height:1;padding-bottom:10px;border-bottom:1px solid var(--soft)}
+.roi-box h3{font-family:"Bebas Neue",sans-serif;font-size:1.55rem;margin:0 0 14px;letter-spacing:.03em;line-height:1;padding-bottom:10px;border-bottom:1px solid var(--soft)}
 .roi-box .roi-metrics{font-family:"DM Sans",sans-serif;font-size:13px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;margin:0 0 10px;color:var(--muted)}
 .roi-box .roi-metrics strong{color:var(--ink)}
 .roi-box p{margin:0;color:var(--muted);font-size:15px;line-height:1.5;font-weight:500}
+.roi-mini-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 12px}
+@media(max-width:700px){.roi-mini-grid{grid-template-columns:repeat(2,1fr)}}
+.roi-mini{border:1px solid var(--soft);border-radius:10px;padding:12px 12px 11px;background:#fafaf8;min-width:0}
+.roi-mini .rm-lbl{display:block;font-family:"DM Sans",sans-serif;font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--muted);margin-bottom:6px}
+.roi-mini .rm-val{font-family:"Bebas Neue",sans-serif;font-size:1.65rem;letter-spacing:.02em;line-height:1;color:var(--ink)}
+.roi-mini .rm-sub{display:block;margin-top:5px;font-size:12px;color:var(--muted);font-weight:500;line-height:1.35}
+.roi-box .roi-note{margin:0;padding-top:10px;border-top:1px solid var(--soft);color:var(--muted);font-size:13.5px;line-height:1.45;font-weight:500}
+.info-tile .slist-bio-list{margin-top:4px}
+.info-tile .info-prose{margin:0;color:var(--muted);font-size:14.5px;line-height:1.5;font-weight:500}
 .scorecards{display:grid;gap:16px;margin-top:18px}
 .card{border:1px solid var(--ink);padding:18px 20px;display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start;text-decoration:none;color:inherit;transition:transform .2s ease,border-color .2s ease;border-radius:2px}
 .card:hover{transform:translateY(-2px);border-color:var(--accent);color:inherit}
@@ -886,60 +895,71 @@ def score_num(text: str) -> int | None:
     return int(m.group(1)) if m else None
 
 
+def _roi_mini(label: str, value: str, sub: str = "") -> str:
+    sub_html = f'<span class="rm-sub">{sub}</span>' if sub else ""
+    return (
+        f'<div class="roi-mini"><span class="rm-lbl">{escape(label)}</span>'
+        f'<div class="rm-val">{value}</div>{sub_html}</div>'
+    )
+
+
 def roi_explain_html(creative: str, risk: str, roi: str, fee: str, fit: str, card: dict | None = None) -> str:
+    """Fee-efficiency tile only — Creative / Risk live in Score snapshot (no duplicate)."""
     if card:
         delta = card["roi_delta_usd"]
         sign = "+" if delta >= 0 else "−"
         uplift = card["roi_uplift_pct"]
         uplift_sign = "+" if uplift >= 0 else ""
-        metrics = (
-            f"Creative <strong>{card['creative']}/100</strong> · "
-            f"Risk <strong>{card['risk_norm']}/100 ({escape(card['risk_level'])})</strong> · "
-            f"ROI <strong>{card['roi']}/100</strong> · "
-            f"Fee mid <strong>{escape(money(card['fee_mid']))}</strong> · "
-            f"Delta <strong>{sign}{escape(money(abs(delta)))}</strong> "
-            f"(<strong>{uplift_sign}{uplift}%</strong>)"
+        cost_100 = card.get("cost_100", 0)
+        value_100 = card.get("value_100", 0)
+        fee_q = fee_quantified(fee)
+        minis = "".join(
+            [
+                _roi_mini("ROI score", f"{card['roi']}<span class='sc-score-den'>/100</span>", "Higher is better"),
+                _roi_mini("Fee midpoint", escape(money(card["fee_mid"])), escape(fee_q or "Band midpoint")),
+                _roi_mini(
+                    "Fee delta",
+                    f"{sign}{escape(money(abs(delta)))}",
+                    f"{uplift_sign}{uplift}% vs midpoint",
+                ),
+                _roi_mini(
+                    "Cost efficiency",
+                    f"{cost_100}<span class='sc-score-den'>/100</span>",
+                    "Higher = cheaper / easier",
+                ),
+                _roi_mini(
+                    "Value index",
+                    f"{value_100}<span class='sc-score-den'>/100</span>",
+                    "Higher = more packaging value",
+                ),
+                _roi_mini(
+                    "Spread",
+                    f"{value_100 - cost_100:+d}",
+                    "Value − cost (normalized pts)",
+                ),
+            ]
         )
-        body = (
-            f"ROI is packaging efficiency at the fee-band midpoint. "
-            f"Cost {card['cost_sub']:g}/35 vs Value {card['value_sub']:g}/65 "
-            f"(rubric: Value − Cost + 35 → 0–100). "
-            f"Bands: Low &lt;$100K · Med $100–500K · High $500K–$1M · Extremely High &gt;$1M."
+        note = (
+            "ROI is packaging efficiency at the fee-band midpoint "
+            "(rubric: Value − Cost + 35 → 0–100). "
+            "Bands: Low &lt;$100K · Med $100–500K · High $500K–$1M · Extremely High &gt;$1M."
         )
         return f"""
 <div class="info-tile span-2 roi-box" data-reveal>
-  <h3>ROI · fee efficiency ($ / %)</h3>
-  <p class="roi-metrics">{metrics}</p>
-  <p>{body}</p>
+  <h3>ROI · fee efficiency</h3>
+  <div class="roi-mini-grid">{minis}</div>
+  <p class="roi-note">{note}</p>
 </div>
 """
     # fallback legacy
-    c, r, o = score_num(creative), score_num(risk), score_num(roi)
     fee_q = fee_quantified(fee)
-    spread = None if c is None or r is None else c - r
-    spread_txt = ""
-    if spread is not None:
-        sign = "+" if spread >= 0 else ""
-        spread_txt = (
-            f" Creative–Risk spread is <strong>{sign}{spread}</strong> pts "
-            f"({c} creative vs {r} risk)."
-        )
-    roi_txt = f"{o}/100" if o is not None else (roi or "—")
-    fit_n = score_num(fit)
-    fit_bit = f" Shortlist fit {fit_n}/10." if fit_n is not None else ""
-    body = (
-        f"ROI {escape(str(roi_txt))} at fee <strong>{escape(fee_q)}</strong>."
-        f"{spread_txt}{escape(fit_bit)}"
-    )
-    metrics = (
-        f"Creative <strong>{escape(creative)}</strong> · Risk <strong>{escape(risk)}</strong> · "
-        f"ROI <strong>{escape(roi)}</strong> · Fee <strong>{escape(fee_q)}</strong>"
-    )
     return f"""
 <div class="info-tile span-2 roi-box" data-reveal>
   <h3>ROI · fee efficiency</h3>
-  <p class="roi-metrics">{metrics}</p>
-  <p>{body}</p>
+  <div class="roi-mini-grid">
+    {_roi_mini("ROI", escape(roi or "—"))}
+    {_roi_mini("Fee", escape(fee_q))}
+  </div>
 </div>
 """
 
@@ -1660,14 +1680,8 @@ def render_actor_page(name: str, payload: dict, enrich_one: dict, registry: dict
 
     car = carousel_html(name, hs, gallery, depth=1)
 
-    delta_sign = "+" if card["roi_delta_usd"] >= 0 else "−"
-    uplift_sign = "+" if card["roi_uplift_pct"] >= 0 else ""
-    roi_dd = (
-        f"{card['roi']}/100 · {escape(money(card['fee_mid']))} mid · "
-        f"{delta_sign}{escape(money(abs(card['roi_delta_usd'])))} "
-        f"({uplift_sign}{card['roi_uplift_pct']}%)"
-    )
     links = icon_links(name, registry, {name: enrich_one}, prefix="../")
+    lane_note = card.get("note") or note or expand_notes(row.get("Notes", "") or "")
     casting_tile = info_tile(
         "Casting lane",
         [
@@ -1684,8 +1698,12 @@ def render_actor_page(name: str, payload: dict, enrich_one: dict, registry: dict
         "Score snapshot",
         [
             ("Creative", f"{card['creative']}/100"),
-            ("Risk", f"{card['risk_norm']}/100 ({escape(card['risk_level'])})"),
-            ("ROI", roi_dd),
+            (
+                "Risk clearance",
+                f"{card.get('risk_clearance', 100 - card['risk_norm'])}/100 "
+                f"({escape(card['risk_level'])} residual)",
+            ),
+            ("ROI", f"{card['roi']}/100"),
         ],
     )
     lock_tile = info_tile(
@@ -1693,7 +1711,18 @@ def render_actor_page(name: str, payload: dict, enrich_one: dict, registry: dict
         [
             ("Role age", escape(profile.get("Age", ""))),
             ("Look lock", escape(profile.get("Ethnicity / look", ""))),
+            ("Emotional core", escape(profile.get("Emotional core", ""))),
         ],
+    )
+    why_tile = info_tile(
+        "Why this lane",
+        [],
+        extra=f'<p class="info-prose">{escape(lane_note or "—")}</p>',
+    )
+    bio_tile = info_tile(
+        "Bio",
+        [],
+        extra=bio_bullets_html(bio) or '<p class="info-prose">Profile pending.</p>',
     )
     profiles_tile = (
         info_tile("Profiles", [], extra=links) if links else ""
@@ -1719,6 +1748,8 @@ def render_actor_page(name: str, payload: dict, enrich_one: dict, registry: dict
     {casting_tile}
     {score_tile}
     {lock_tile}
+    {why_tile}
+    {bio_tile}
     {profiles_tile}
     {roi_box}
   </div>
@@ -1727,10 +1758,6 @@ def render_actor_page(name: str, payload: dict, enrich_one: dict, registry: dict
 {reel_block(enrich_one)}
 <section data-reveal>
   {sc_html}
-  <p class="fit" style="margin-top:22px"><strong>Notes.</strong> {escape(card.get('note') or note or '—')}</p>
-  <div class="fit" style="margin-top:14px"><strong>Bio.</strong> {bio_bullets_html(bio) or '<p class="slist-bio">Profile pending.</p>'}</div>
-  <p class="fit" style="margin-top:14px"><strong>Role emotional core.</strong> {escape(profile.get('Emotional core',''))}</p>
-  <p class="fit" style="margin-top:14px"><strong>Why this lane.</strong> {escape(expand_notes(row.get('Notes','')))}</p>
 </section>
 """
     return shell(f"{name} · {role['title']}", role["slug"], body, depth=1)

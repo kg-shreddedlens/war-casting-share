@@ -15,12 +15,39 @@ import shutil
 import string
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 SITE = ROOT / "site"
 DIST = ROOT / "dist"
 PW_FILE = ROOT / "PASSWORD.txt"
+
+
+def _rmtree_retry(path: Path, attempts: int = 8) -> None:
+    """Dropbox / Explorer often lock dist/actors briefly on Windows."""
+    if not path.exists():
+        return
+    last_err: Exception | None = None
+    for i in range(attempts):
+        try:
+            # Rename first so a locked handle can't block the next build's path
+            tomb = path.with_name(f"{path.name}.__old_{int(time.time())}_{i}")
+            try:
+                path.rename(tomb)
+                target = tomb
+            except OSError:
+                target = path
+            shutil.rmtree(target, ignore_errors=True)
+            if not path.exists() and (target == path or not target.exists()):
+                return
+            if not path.exists():
+                return
+        except Exception as e:  # noqa: BLE001 — retry loop
+            last_err = e
+        time.sleep(0.4 * (i + 1))
+    if path.exists():
+        raise PermissionError(f"Could not remove {path}") from last_err
 
 
 def gen_password(n: int = 14) -> str:
@@ -95,9 +122,7 @@ def main() -> None:
     # Clean previous dist HTML so leftover encrypted pages don't break patching
     for old in DIST.rglob("*.html"):
         old.unlink()
-    actors_old = DIST / "actors"
-    if actors_old.exists():
-        shutil.rmtree(actors_old)
+    _rmtree_retry(DIST / "actors")
 
     html_files = sorted(SITE.rglob("*.html"))
     # Use paths relative to SITE so staticrypt preserves actors/ structure under DIST
@@ -143,8 +168,7 @@ def main() -> None:
     src_assets = SITE / "assets"
     if src_assets.exists():
         dst_assets = DIST / "assets"
-        if dst_assets.exists():
-            shutil.rmtree(dst_assets)
+        _rmtree_retry(dst_assets)
         shutil.copytree(src_assets, dst_assets)
         print(f"copied assets -> {dst_assets}")
 

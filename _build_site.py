@@ -48,6 +48,31 @@ FONTS = (
 
 GALLERY_PATH = ROOT / "gallery_cache.json"
 GALLERY_LOCAL_PATH = ROOT / "gallery_local.json"
+NOTES_EXPAND_PATH = ROOT / "notes_expand.json"
+
+# Shortlist Flags tokens → full sentences (shreds keep shorthand; site expands)
+FLAG_SENTENCES = {
+    "Verbal": "Strong dialogue and verbal delivery.",
+    "Presence": "Strong on-screen presence.",
+    "Budget": "Fits the target fee and budget lane.",
+    "Familiarity": "Useful audience familiarity and recognition.",
+    "Gravitas": "Brings weight and gravitas.",
+    "Restraint": "Controlled, restrained performance style.",
+    "Discovery": "Discovery and rising-talent upside.",
+    "Look lock": "Matches the locked look.",
+    "Press": "Press and PR value.",
+    "Artistic": "Artistic, elevated interpretation of the role.",
+    "Ambiguity": "Useful tonal ambiguity for the role.",
+    "Horror": "Horror and dread fluency.",
+    "Stage": "Strong stage craft.",
+    "Commercial": "Commercial draw.",
+    "Symbolic": "Symbolic or iconic casting value.",
+    "Range": "Wide performance range.",
+    "Press rising": "Rising press profile.",
+    "Presence rising": "Rising on-screen presence.",
+    "Familiarity rising": "Rising audience familiarity.",
+    "Familiarity adjacent": "Adjacent familiarity without overexposure.",
+}
 
 # Buffalo 8-style fee quantification used in shortlists / actor shreds
 FEE_BAND_DOLLARS = [
@@ -426,6 +451,46 @@ def slugify(name: str) -> str:
     s = s.replace("'", "").replace("'", "").replace(".", "")
     s = re.sub(r"[^a-z0-9]+", "-", s).strip("-")
     return s
+
+
+_NOTES_EXPAND: dict[str, str] | None = None
+
+
+def load_notes_expand() -> dict[str, str]:
+    global _NOTES_EXPAND
+    if _NOTES_EXPAND is None:
+        if NOTES_EXPAND_PATH.exists():
+            _NOTES_EXPAND = json.loads(NOTES_EXPAND_PATH.read_text(encoding="utf-8"))
+        else:
+            _NOTES_EXPAND = {}
+    return _NOTES_EXPAND
+
+
+def expand_flags(raw: str) -> str:
+    """Turn shred flag tokens into readable sentences for the share site."""
+    if not (raw or "").strip():
+        return ""
+    parts = [p.strip() for p in re.split(r"[,/]+", raw) if p.strip()]
+    sentences: list[str] = []
+    for part in parts:
+        mapped = FLAG_SENTENCES.get(part) or FLAG_SENTENCES.get(part.title())
+        sentences.append(mapped or f"{part} is a casting strength here.")
+    return " ".join(sentences)
+
+
+def expand_notes(raw: str) -> str:
+    """Turn shred note shorthand into a full sentence when possible."""
+    text = (raw or "").strip()
+    if not text:
+        return ""
+    mapped = load_notes_expand().get(text)
+    if mapped:
+        return mapped
+    if text.endswith(".") and len(text) > 24:
+        return text
+    if text.lower().startswith(("prefer ", "if ", "alt ")):
+        return text if text.endswith(".") else f"{text}."
+    return text if text.endswith(".") else f"{text}."
 
 
 def parse_pipe_row(line: str) -> list[str] | None:
@@ -1009,8 +1074,8 @@ def render_shortlist_section(role: dict, title: str, code: str, rows: list[dict]
             href = actor_slug_path(role["slug"], name)
         fit = row.get("Fit", "")
         fee = row.get("Fee band", "")
-        flags = row.get("Flags", "").replace(",", " ·")
-        notes = row.get("Notes", "")
+        flags = expand_flags(row.get("Flags", ""))
+        notes = expand_notes(row.get("Notes", ""))
         bio = shorten_bio((registry.get(name) or {}).get("bio") or "")
         hs = headshot_src(name, registry)
         avatar = avatar_html(hs, "sm", name)
@@ -1024,7 +1089,7 @@ def render_shortlist_section(role: dict, title: str, code: str, rows: list[dict]
         )
         flags_html = (
             f'<div class="slist-metric span-2"><span class="lbl">Flags</span>'
-            f'<div class="val">{escape(flags)}</div></div>'
+            f'<p class="slist-notes">{escape(flags)}</p></div>'
             if flags
             else ""
         )
@@ -1215,7 +1280,7 @@ def render_actor_page(name: str, payload: dict, enrich_one: dict, registry: dict
 
     existing = None
     attrs = None
-    note = row.get("Notes", "") or ""
+    note = expand_notes(row.get("Notes", "") or "")
     if sc:
         existing = {
             "creative": sc.get("creative"),
@@ -1225,7 +1290,7 @@ def render_actor_page(name: str, payload: dict, enrich_one: dict, registry: dict
             "note": sc.get("note"),
         }
         attrs = sc.get("attrs")
-        note = sc.get("note") or note
+        note = expand_notes(sc.get("note") or note)
 
     card = build_full_scorecard(row, attrs=attrs, note=note, existing=existing)
     sc_html = full_scorecard_html(card)
@@ -1258,7 +1323,7 @@ def render_actor_page(name: str, payload: dict, enrich_one: dict, registry: dict
             ("Fit", escape(row.get("Fit", ""))),
             ("Fee band", escape(fee_quantified(fee_raw))),
             ("Leverage", escape(row.get("Leverage", ""))),
-            ("Flags", escape(row.get("Flags", "").replace(",", " ·"))),
+            ("Flags", escape(expand_flags(row.get("Flags", "")))),
             ("Avail risk", escape(row.get("Avail risk", ""))),
         ],
     )
@@ -1312,7 +1377,7 @@ def render_actor_page(name: str, payload: dict, enrich_one: dict, registry: dict
   <p class="fit" style="margin-top:22px"><strong>Notes.</strong> {escape(card.get('note') or note or '—')}</p>
   <p class="fit" style="margin-top:14px"><strong>Bio.</strong> {escape(shorten_bio(bio, 420) or 'Profile pending.')}</p>
   <p class="fit" style="margin-top:14px"><strong>Role emotional core.</strong> {escape(profile.get('Emotional core',''))}</p>
-  <p class="fit" style="margin-top:14px"><strong>Why this lane.</strong> {escape(row.get('Notes',''))}</p>
+  <p class="fit" style="margin-top:14px"><strong>Why this lane.</strong> {escape(expand_notes(row.get('Notes','')))}</p>
 </section>
 """
     return shell(f"{name} · {role['title']}", role["slug"], body, depth=1)

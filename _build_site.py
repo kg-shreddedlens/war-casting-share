@@ -35,6 +35,19 @@ FONTS = (
 )
 
 GALLERY_PATH = ROOT / "gallery_cache.json"
+GALLERY_LOCAL_PATH = ROOT / "gallery_local.json"
+
+# Buffalo 8-style fee quantification used in shortlists / actor shreds
+FEE_BAND_DOLLARS = [
+    ("extremely high", "Extremely High", ">$1M"),
+    ("med-high", "Med-High", "~$250–750K"),
+    ("med/high", "Med/High", "~$250–750K"),
+    ("low-med", "Low-Med", "~$50–150K"),
+    ("low/med", "Low/Med", "~$50–150K"),
+    ("high", "High", "$500K–$1M"),
+    ("med", "Med", "$100–500K"),
+    ("low", "Low", "<$100K"),
+]
 
 CHARACTERS = [
     {
@@ -215,7 +228,7 @@ a{color:var(--ink)}a:hover{color:var(--accent)}
 .avatar{width:160px;height:160px;border-radius:var(--radius);object-fit:cover;object-position:center 18%;border:2px solid var(--ink);background:#eee;display:block;transition:transform .25s ease,box-shadow .25s ease}
 .avatar-wrap:hover .avatar{transform:scale(1.85);box-shadow:0 18px 50px rgba(0,0,0,.28)}
 .avatar.lg{width:200px;height:200px}
-.avatar.sm{width:76px;height:76px;border-width:2px}
+.avatar.sm{width:80px;height:80px;border-width:2px}
 .avatar.tile{width:84px;height:84px}
 .avatar.main{width:100%;max-width:280px;height:auto;aspect-ratio:1;border-radius:var(--radius)}
 .section-head{margin:56px 0 20px}
@@ -227,22 +240,30 @@ a{color:var(--ink)}a:hover{color:var(--accent)}
 .profile dt{font-family:"DM Sans",sans-serif;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding-top:2px;font-weight:700}
 .profile dd{margin:0;line-height:1.45;font-weight:500}
 .fit{font-size:15px;line-height:1.55;color:var(--muted);margin:0;font-weight:500}
+.fit-block{margin:0}
+.fit-block > strong{display:block;font-family:"DM Sans",sans-serif;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink);margin-bottom:10px}
+.fit-list{margin:0;padding-left:1.2rem;color:var(--muted);font-size:15px;line-height:1.45;font-weight:500}
+.fit-list li{margin:0 0 10px;padding-left:4px}
+.fit-list li::marker{font-weight:700;color:var(--ink)}
 .table-wrap{overflow:auto;border-bottom:3px solid var(--ink);margin-bottom:8px}
-.cast-table{width:100%;border-collapse:collapse;min-width:900px}
+.cast-table{width:100%;border-collapse:collapse;min-width:960px}
 .cast-table th,.cast-table td{padding:0 14px;text-align:left;vertical-align:middle}
 .cast-table th{font-family:"DM Sans",sans-serif;font-size:11px;letter-spacing:.1em;text-transform:uppercase;border-bottom:2px solid var(--ink);font-weight:700;padding-top:12px;padding-bottom:12px}
-.cast-table td{border-bottom:1px solid var(--soft);font-size:14px;font-weight:500;height:92px}
+.cast-table td{border-bottom:1px solid var(--soft);font-size:14px;font-weight:500;height:96px;padding-top:8px;padding-bottom:8px}
 .cast-table tbody tr{cursor:pointer;transition:background .2s ease}
 .cast-table tbody tr:hover{background:#efefed}
-.actor-cell{display:flex;gap:14px;align-items:center;min-height:76px}
+.actor-cell{display:flex;gap:14px;align-items:center;min-height:80px}
 .actor-cell .text{min-width:0}
 .actor-cell .name{font-weight:700;margin:0 0 4px;font-size:15px}
 .actor-cell .bio{color:var(--muted);font-size:12.5px;line-height:1.35;max-width:36ch;margin:0;font-weight:500}
+.fee-cell{line-height:1.35}
+.fee-cell .fee-band{display:block;font-weight:700}
+.fee-cell .fee-dollars{display:block;font-size:12px;color:var(--muted);font-weight:500;margin-top:2px}
 .tier{display:inline-block;padding:3px 9px;font-size:11px;letter-spacing:.08em;border:1px solid var(--ink);font-family:"DM Sans",sans-serif;font-weight:700}
 .tier-a{background:var(--accent);color:#fff;border-color:var(--accent)}
 .num{font-variant-numeric:tabular-nums;font-family:"DM Sans",sans-serif;font-size:12px;font-weight:600}
 .icon-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
-.icon-link{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:9px;text-decoration:none;background:#111;color:#fff;transition:transform .2s ease,background .2s ease}
+.icon-link{display:inline-flex;align-items:center;gap:7px;width:auto;height:auto;padding:6px 10px;border-radius:8px;text-decoration:none;background:#111;color:#fff;font-family:"DM Sans",sans-serif;font-size:12px;font-weight:600;letter-spacing:.02em;transition:transform .2s ease,background .2s ease,color .2s ease}
 .icon-link:hover{transform:translateY(-2px);background:var(--accent);color:#fff}
 .icon-link.imdb{background:#f5c518;color:#0a0a0a}
 .icon-link.imdb:hover{background:#ffd84a;color:#0a0a0a}
@@ -251,7 +272,13 @@ a{color:var(--ink)}a:hover{color:var(--accent)}
 .icon-link.yt{background:#ff0000}
 .icon-link.li{background:#0a66c2}
 .icon-link.spot{background:#222}
-.icon-link svg{width:16px;height:16px;display:block}
+.icon-link svg{width:14px;height:14px;display:block;flex-shrink:0}
+.icon-link .lbl{line-height:1;white-space:nowrap}
+.roi-box{border:1px solid var(--ink);padding:16px 18px;margin:16px 0 0;background:#fff}
+.roi-box h3{font-family:"Bebas Neue",sans-serif;font-size:1.35rem;margin:0 0 8px;letter-spacing:.03em}
+.roi-box .roi-metrics{font-family:"DM Sans",sans-serif;font-size:12px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;margin:0 0 10px;color:var(--muted)}
+.roi-box .roi-metrics strong{color:var(--ink)}
+.roi-box p{margin:0;color:var(--muted);font-size:14px;line-height:1.5;font-weight:500}
 .scorecards{display:grid;gap:16px;margin-top:18px}
 .card{border:1px solid var(--ink);padding:18px 20px;display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start;text-decoration:none;color:inherit;transition:transform .2s ease,border-color .2s ease;border-radius:2px}
 .card:hover{transform:translateY(-2px);border-color:var(--accent);color:inherit}
@@ -286,13 +313,14 @@ a{color:var(--ink)}a:hover{color:var(--accent)}
 .kv{display:grid;grid-template-columns:min(34%,140px) 1fr;gap:10px 16px;margin:0}
 .kv dt{font-family:"DM Sans",sans-serif;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700}
 .kv dd{margin:0;font-weight:500;line-height:1.4;max-width:42ch;overflow-wrap:anywhere}
-.gallery-block{margin-top:18px}
-.carousel{display:flex;gap:10px;overflow-x:auto;padding:6px 2px 14px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+.gallery-block{margin:8px 0 28px;width:100%}
+.carousel{display:flex;gap:12px;overflow-x:auto;padding:6px 2px 14px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;width:100%}
 .carousel::-webkit-scrollbar{height:6px}
 .carousel::-webkit-scrollbar-thumb{background:#bbb;border-radius:99px}
-.carousel figure{margin:0;flex:0 0 160px;scroll-snap-align:start}
-.carousel img{width:160px;height:160px;object-fit:cover;object-position:center 20%;border-radius:var(--radius);border:2px solid var(--ink);display:block;transition:transform .25s ease}
-.carousel .avatar-wrap:hover img{transform:scale(1.35)}
+.carousel figure{margin:0;flex:0 0 clamp(160px,18vw,220px);scroll-snap-align:start}
+.carousel img{width:100%;aspect-ratio:1;height:auto;object-fit:cover;object-position:center 18%;border-radius:var(--radius);border:2px solid var(--ink);display:block;transition:transform .25s ease}
+.carousel .avatar-wrap:hover img{transform:scale(1.28)}
+.carousel-empty{border:1px dashed var(--soft);padding:18px;color:var(--muted);font-size:14px;font-weight:500}
 [data-reveal]{opacity:0;transform:translateY(14px);transition:opacity .7s ease,transform .7s ease}
 [data-reveal].in{opacity:1;transform:none}
 """
@@ -383,9 +411,92 @@ def extract_role_profile(md: str) -> dict[str, str]:
     elif "Fit criteria" not in out:
         block = re.search(r"\*\*Fit criteria\*\*\s*\n\n((?:\d+\..+\n?)+)", md)
         if block:
-            out["Fit criteria"] = " ".join(x.strip() for x in block.group(1).splitlines() if x.strip())
+            out["Fit criteria"] = "\n".join(x.strip() for x in block.group(1).splitlines() if x.strip())
     return out
 
+
+def fee_parts(fee: str) -> tuple[str, str]:
+    """Return (band label, dollar range) for Buffalo 8-style fee bands."""
+    raw = (fee or "").strip()
+    if not raw:
+        return ("—", "")
+    key = raw.lower().replace(" ", "")
+    for needle, label, dollars in FEE_BAND_DOLLARS:
+        if needle.replace(" ", "") in key:
+            return (label if label.lower() in raw.lower() else raw, dollars)
+    return (raw, "")
+
+
+def fee_quantified(fee: str) -> str:
+    band, dollars = fee_parts(fee)
+    if dollars:
+        return f"{band} · {dollars}"
+    return band
+
+
+def fee_cell_html(fee: str) -> str:
+    band, dollars = fee_parts(fee)
+    if dollars:
+        return (
+            f'<div class="fee-cell"><span class="fee-band">{escape(band)}</span>'
+            f'<span class="fee-dollars">{escape(dollars)}</span></div>'
+        )
+    return escape(band)
+
+
+def fit_criteria_html(fit: str) -> str:
+    if not fit:
+        return ""
+    items = [ln.strip() for ln in fit.splitlines() if re.match(r"^\d+\.", ln.strip())]
+    if not items:
+        items = re.findall(r"\d+\.\s*([^0-9]+?)(?=\s*\d+\.|$)", fit)
+        items = [i.strip(" ·;") for i in items if i.strip()]
+    if not items:
+        return f'<div class="fit-block"><strong>Fit criteria</strong><p class="fit">{escape(fit)}</p></div>'
+    lis = []
+    for item in items:
+        text = re.sub(r"^\d+\.\s*", "", item).strip()
+        if text:
+            lis.append(f"<li>{escape(text)}</li>")
+    return f'<div class="fit-block"><strong>Fit criteria</strong><ol class="fit-list">{"".join(lis)}</ol></div>'
+
+
+def score_num(text: str) -> int | None:
+    m = re.search(r"(\d+)", text or "")
+    return int(m.group(1)) if m else None
+
+
+def roi_explain_html(creative: str, risk: str, roi: str, fee: str, fit: str) -> str:
+    c, r, o = score_num(creative), score_num(risk), score_num(roi)
+    fee_q = fee_quantified(fee)
+    spread = None if c is None or r is None else c - r
+    spread_txt = ""
+    if spread is not None:
+        sign = "+" if spread >= 0 else ""
+        spread_txt = (
+            f" Creative–Risk spread is <strong>{sign}{spread}</strong> pts "
+            f"({c} creative vs {r} risk) — positive spread means craft value outruns schedule/cash drag."
+        )
+    roi_txt = f"{o}/100" if o is not None else (roi or "—")
+    fit_n = score_num(fit)
+    fit_bit = f" Shortlist fit {fit_n}/10." if fit_n is not None else ""
+    body = (
+        f"ROI {escape(str(roi_txt))} is packaging efficiency: how much sales/press gravity you buy "
+        f"per dollar and avail risk at <strong>{escape(fee_q)}</strong>."
+        f"{spread_txt}{escape(fit_bit)} "
+        f"Bands: Low &lt;$100K · Med $100–500K · High $500K–$1M · Extremely High &gt;$1M."
+    )
+    metrics = (
+        f"Creative <strong>{escape(creative)}</strong> · Risk <strong>{escape(risk)}</strong> · "
+        f"ROI <strong>{escape(roi)}</strong> · Fee <strong>{escape(fee_q)}</strong>"
+    )
+    return f"""
+<div class="roi-box" data-reveal>
+  <h3>ROI · fee efficiency</h3>
+  <p class="roi-metrics">{metrics}</p>
+  <p>{body}</p>
+</div>
+"""
 
 def extract_shortlists(md: str) -> list[tuple[str, str, list[dict]]]:
     sections: list[tuple[str, str, list[dict]]] = []
@@ -428,9 +539,31 @@ def extract_shortlists(md: str) -> list[tuple[str, str, list[dict]]]:
 
 
 def load_gallery() -> dict:
+    """Prefer locally mirrored stills; fall back to cleaned remote URLs."""
+    local: dict = {}
+    if GALLERY_LOCAL_PATH.exists():
+        local = json.loads(GALLERY_LOCAL_PATH.read_text(encoding="utf-8"))
+    remote: dict = {}
     if GALLERY_PATH.exists():
-        return json.loads(GALLERY_PATH.read_text(encoding="utf-8"))
-    return {}
+        remote = json.loads(GALLERY_PATH.read_text(encoding="utf-8"))
+    merged: dict[str, list[str]] = {}
+    for name in set(local) | set(remote):
+        locs = [u for u in (local.get(name) or []) if u]
+        if locs:
+            merged[name] = locs
+            continue
+        cleaned: list[str] = []
+        for u in remote.get(name) or []:
+            u = (u or "").split("?")[0]
+            if not u or "svg" in u.lower():
+                continue
+            # Wikimedia rejects arbitrary px sizes (e.g. 800); 500px is allowed
+            if "upload.wikimedia.org" in u and "/thumb/" in u:
+                u = re.sub(r"/\d+px-", "/500px-", u)
+            if u not in cleaned:
+                cleaned.append(u)
+        merged[name] = cleaned
+    return merged
 
 
 def extract_scorecards(md: str) -> list[dict]:
@@ -529,45 +662,44 @@ def icon_links(name: str, registry: dict, enrich: dict, prefix: str = "") -> str
         if not url or "pending" in url.lower():
             continue
         links.append(
-            f'<a class="icon-link {key}" href="{escape(url)}" target="_blank" rel="noopener" title="{escape(label)}" onclick="event.stopPropagation()">{ICONS[key]}</a>'
+            f'<a class="icon-link {key}" href="{escape(url)}" target="_blank" rel="noopener" '
+            f'title="{escape(label)}" onclick="event.stopPropagation()">'
+            f'{ICONS[key]}<span class="lbl">{escape(label)}</span></a>'
         )
     return f'<div class="icon-row">{"".join(links)}</div>' if links else ""
 
 
-def carousel_html(name: str, main_src: str | None, gallery: dict, role_portrait: str | None, depth: int = 0) -> str:
+def carousel_html(name: str, main_src: str | None, gallery: dict, depth: int = 0) -> str:
+    """Unique actor-only stills. Never pad with role portraits or duplicate cycles."""
     prefix = "../" * depth
     urls: list[str] = []
     for u in gallery.get(name) or []:
-        if u and u not in urls and "svg" not in u.lower():
-            urls.append(u)
-    if main_src and main_src not in urls:
-        urls.insert(0, main_src)
-    # Additional board: prefer actor stills; pad with role concept portrait once if short
-    extras = [u for u in urls if u != main_src]
-    if role_portrait:
-        rp = f"{prefix}assets/{role_portrait}" if not str(role_portrait).startswith(("http", "assets/", "../")) else role_portrait
-        if not str(rp).startswith(("http", "../", "assets/")):
-            rp = f"{prefix}assets/{role_portrait}"
-        if rp not in extras and len(extras) < 10:
-            extras.append(rp)
-    # If still short, keep cycling available actor images to fill 10 slots for board density
-    seed = list(extras) if extras else ([main_src] if main_src else [])
-    filled: list[str] = []
-    i = 0
-    while len(filled) < 10 and seed:
-        filled.append(seed[i % len(seed)])
-        i += 1
-        if i > 40:
-            break
-    extras = filled[:10]
-    figs = []
-    for u in extras:
-        figs.append(
-            f'<figure class="avatar-wrap"><img src="{escape(u)}" alt="{escape(name)}" loading="lazy" /></figure>'
-        )
+        if not u:
+            continue
+        src = u
+        if src.startswith("assets/"):
+            src = f"{prefix}{src}"
+        if src not in urls and "svg" not in src.lower():
+            urls.append(src)
+    board = [u for u in urls if u != main_src]
+    if not board and main_src:
+        board = [main_src]
+    board = board[:10]
+    if not board:
+        return f"""
+<div class="gallery-block" data-reveal>
+  <p class="eyebrow">Image board</p>
+  <p class="carousel-empty">No verified stills for {escape(name)} yet — headshot only above.</p>
+</div>
+"""
+    figs = [
+        f'<figure class="avatar-wrap"><img src="{escape(u)}" alt="{escape(name)}" loading="lazy" /></figure>'
+        for u in board
+    ]
+    plural = "s" if len(board) != 1 else ""
     return f"""
 <div class="gallery-block" data-reveal>
-  <p class="eyebrow">Image board · {len(extras)} stills</p>
+  <p class="eyebrow">Image board · {len(board)} still{plural}</p>
   <div class="carousel">{''.join(figs)}</div>
 </div>
 """
@@ -774,7 +906,7 @@ def render_shortlist_section(role: dict, title: str, code: str, rows: list[dict]
   <td>{name_block}</td>
   <td><span class="tier tier-{code.lower()}">{escape(code)}</span></td>
   <td class="num">{escape(fit)}</td>
-  <td>{escape(fee)}</td>
+  <td>{fee_cell_html(fee)}</td>
   <td>{escape(flags)}</td>
   <td>{escape(notes)}</td>
 </tr>"""
@@ -821,7 +953,7 @@ def render_character(meta: dict, registry: dict, enrich: dict) -> tuple[str, lis
 </header>
 <section class="profile" data-reveal>
   <dl>{''.join(dl)}</dl>
-  <p class="fit"><strong>Fit criteria.</strong> {escape(fit)}</p>
+  {fit_criteria_html(fit)}
 </section>
 <div id="shortlists">
 {''.join(render_shortlist_section(meta, t, c, rows, registry, enrich) for t, c, rows in shortlists)}
@@ -918,7 +1050,9 @@ def render_actor_page(name: str, payload: dict, enrich_one: dict, registry: dict
         f'<div class="attr"><b>{escape(a)}</b><span>{escape(v)}</span></div>' for a, v in attrs
     ) + "</div>"
 
-    car = carousel_html(name, hs, gallery, role.get("portrait"), depth=1)
+    car = carousel_html(name, hs, gallery, depth=1)
+    fee_raw = row.get("Fee band", "")
+    roi_box = roi_explain_html(creative, risk, roi, fee_raw, row.get("Fit", ""))
 
     body = f"""
 <header class="hero" data-reveal>
@@ -935,23 +1069,24 @@ def render_actor_page(name: str, payload: dict, enrich_one: dict, registry: dict
 <section class="detail-layout" data-reveal>
   <div>
     {avatar}
-    {car}
   </div>
   <div>
     <dl class="kv">
       <dt>Role</dt><dd>{escape(role['title'])}</dd>
       <dt>Tier</dt><dd>{escape(payload['tier_title'])}</dd>
       <dt>Fit</dt><dd>{escape(row.get('Fit',''))}</dd>
-      <dt>Fee band</dt><dd>{escape(row.get('Fee band',''))}</dd>
+      <dt>Fee band</dt><dd>{escape(fee_quantified(fee_raw))}</dd>
       <dt>Leverage</dt><dd>{escape(row.get('Leverage',''))}</dd>
       <dt>Flags</dt><dd>{escape(row.get('Flags','').replace(',', ' ·'))}</dd>
       <dt>Avail risk</dt><dd>{escape(row.get('Avail risk',''))}</dd>
       <dt>Role age</dt><dd>{escape(profile.get('Age',''))}</dd>
       <dt>Look lock</dt><dd>{escape(profile.get('Ethnicity / look',''))}</dd>
     </dl>
-    {icon_links(name, registry, {name: enrich_one})}
+    {icon_links(name, registry, {name: enrich_one}, prefix="../")}
+    {roi_box}
   </div>
 </section>
+{car}
 <section data-reveal>
   <header class="section-head">
     <p class="eyebrow">Expanded scorecard · Character Casting Rubric §4a</p>

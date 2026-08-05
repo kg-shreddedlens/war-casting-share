@@ -286,11 +286,11 @@ a{color:var(--ink)}a:hover{color:var(--accent)}
 .icon-link.spot{background:#222}
 .icon-link svg{width:14px;height:14px;display:block;flex-shrink:0}
 .icon-link .lbl{line-height:1;white-space:nowrap}
-.roi-box{border:1px solid var(--ink);padding:16px 18px;margin:16px 0 0;background:#fff}
-.roi-box h3{font-family:"Bebas Neue",sans-serif;font-size:1.35rem;margin:0 0 8px;letter-spacing:.03em}
-.roi-box .roi-metrics{font-family:"DM Sans",sans-serif;font-size:12px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;margin:0 0 10px;color:var(--muted)}
+.roi-box{border:1px solid var(--ink);border-radius:var(--radius);padding:18px 20px;margin:0;background:#fff}
+.roi-box h3{font-family:"Bebas Neue",sans-serif;font-size:1.55rem;margin:0 0 10px;letter-spacing:.03em;line-height:1;padding-bottom:10px;border-bottom:1px solid var(--soft)}
+.roi-box .roi-metrics{font-family:"DM Sans",sans-serif;font-size:13px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;margin:0 0 10px;color:var(--muted)}
 .roi-box .roi-metrics strong{color:var(--ink)}
-.roi-box p{margin:0;color:var(--muted);font-size:14px;line-height:1.5;font-weight:500}
+.roi-box p{margin:0;color:var(--muted);font-size:15px;line-height:1.5;font-weight:500}
 .scorecards{display:grid;gap:16px;margin-top:18px}
 .card{border:1px solid var(--ink);padding:18px 20px;display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start;text-decoration:none;color:inherit;transition:transform .2s ease,border-color .2s ease;border-radius:2px}
 .card:hover{transform:translateY(-2px);border-color:var(--accent);color:inherit}
@@ -366,9 +366,15 @@ a{color:var(--ink)}a:hover{color:var(--accent)}
 .reel p{margin:0;color:var(--muted);font-size:14px;line-height:1.4;font-weight:500}
 .detail-layout{display:grid;grid-template-columns:minmax(220px,280px) 1fr;gap:28px;margin:28px 0;align-items:start}
 @media(max-width:900px){.detail-layout{grid-template-columns:1fr}}
-.kv{display:grid;grid-template-columns:min(34%,140px) 1fr;gap:10px 16px;margin:0}
-.kv dt{font-family:"DM Sans",sans-serif;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700}
-.kv dd{margin:0;font-weight:500;line-height:1.4;max-width:42ch;overflow-wrap:anywhere}
+.info-tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:0}
+@media(max-width:720px){.info-tiles{grid-template-columns:1fr}}
+.info-tile{border:1px solid var(--ink);border-radius:var(--radius);background:#fff;padding:16px 18px 18px;min-width:0}
+.info-tile.span-2{grid-column:1 / -1}
+.info-tile-title{font-family:"Bebas Neue",sans-serif;font-size:1.45rem;letter-spacing:.03em;margin:0 0 14px;line-height:1;padding-bottom:10px;border-bottom:1px solid var(--soft)}
+.info-tile .icon-row{margin-top:0}
+.kv{display:grid;grid-template-columns:min(38%,150px) 1fr;gap:12px 14px;margin:0}
+.kv dt{font-family:"DM Sans",sans-serif;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;padding-top:3px}
+.kv dd{margin:0;font-weight:600;line-height:1.4;font-size:16px;max-width:42ch;overflow-wrap:anywhere}
 .gallery-block{margin:8px 0 28px;width:100%}
 .carousel{display:flex;gap:12px;overflow-x:auto;padding:6px 2px 14px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;width:100%}
 .carousel::-webkit-scrollbar{height:6px}
@@ -483,6 +489,20 @@ def fee_parts(fee: str) -> tuple[str, str]:
     return (raw, "")
 
 
+def info_tile(title: str, rows: list[tuple[str, str]], *, span2: bool = False, extra: str = "") -> str:
+    """Titled rounded info tile with key/value rows."""
+    items = "".join(
+        f"<dt>{escape(k)}</dt><dd>{v}</dd>" for k, v in rows if v not in (None, "")
+    )
+    span = " span-2" if span2 else ""
+    body = f'<dl class="kv">{items}</dl>' if items else ""
+    return f"""<article class="info-tile{span}">
+  <h3 class="info-tile-title">{escape(title)}</h3>
+  {body}
+  {extra}
+</article>"""
+
+
 def fee_quantified(fee: str) -> str:
     band, dollars = fee_parts(fee)
     if dollars:
@@ -543,7 +563,7 @@ def roi_explain_html(creative: str, risk: str, roi: str, fee: str, fit: str, car
             f"Bands: Low &lt;$100K · Med $100–500K · High $500K–$1M · Extremely High &gt;$1M."
         )
         return f"""
-<div class="roi-box" data-reveal>
+<div class="info-tile span-2 roi-box" data-reveal>
   <h3>ROI · fee efficiency ($ / %)</h3>
   <p class="roi-metrics">{metrics}</p>
   <p>{body}</p>
@@ -572,7 +592,7 @@ def roi_explain_html(creative: str, risk: str, roi: str, fee: str, fit: str, car
         f"ROI <strong>{escape(roi)}</strong> · Fee <strong>{escape(fee_q)}</strong>"
     )
     return f"""
-<div class="roi-box" data-reveal>
+<div class="info-tile span-2 roi-box" data-reveal>
   <h3>ROI · fee efficiency</h3>
   <p class="roi-metrics">{metrics}</p>
   <p>{body}</p>
@@ -1196,6 +1216,45 @@ def render_actor_page(name: str, payload: dict, enrich_one: dict, registry: dict
 
     car = carousel_html(name, hs, gallery, depth=1)
 
+    delta_sign = "+" if card["roi_delta_usd"] >= 0 else "−"
+    uplift_sign = "+" if card["roi_uplift_pct"] >= 0 else ""
+    roi_dd = (
+        f"{card['roi']}/100 · {escape(money(card['fee_mid']))} mid · "
+        f"{delta_sign}{escape(money(abs(card['roi_delta_usd'])))} "
+        f"({uplift_sign}{card['roi_uplift_pct']}%)"
+    )
+    links = icon_links(name, registry, {name: enrich_one}, prefix="../")
+    casting_tile = info_tile(
+        "Casting lane",
+        [
+            ("Role", escape(role["title"])),
+            ("Tier", escape(payload["tier_title"])),
+            ("Fit", escape(row.get("Fit", ""))),
+            ("Fee band", escape(fee_quantified(fee_raw))),
+            ("Leverage", escape(row.get("Leverage", ""))),
+            ("Flags", escape(row.get("Flags", "").replace(",", " ·"))),
+            ("Avail risk", escape(row.get("Avail risk", ""))),
+        ],
+    )
+    score_tile = info_tile(
+        "Score snapshot",
+        [
+            ("Creative", f"{card['creative']}/100"),
+            ("Risk", f"{card['risk_norm']}/100 ({escape(card['risk_level'])})"),
+            ("ROI", roi_dd),
+        ],
+    )
+    lock_tile = info_tile(
+        "Role lock",
+        [
+            ("Role age", escape(profile.get("Age", ""))),
+            ("Look lock", escape(profile.get("Ethnicity / look", ""))),
+        ],
+    )
+    profiles_tile = (
+        info_tile("Profiles", [], extra=links) if links else ""
+    )
+
     body = f"""
 <header class="hero" data-reveal>
   <div class="hero-copy">
@@ -1212,22 +1271,11 @@ def render_actor_page(name: str, payload: dict, enrich_one: dict, registry: dict
   <div>
     {avatar}
   </div>
-  <div>
-    <dl class="kv">
-      <dt>Role</dt><dd>{escape(role['title'])}</dd>
-      <dt>Tier</dt><dd>{escape(payload['tier_title'])}</dd>
-      <dt>Fit</dt><dd>{escape(row.get('Fit',''))}</dd>
-      <dt>Fee band</dt><dd>{escape(fee_quantified(fee_raw))}</dd>
-      <dt>Leverage</dt><dd>{escape(row.get('Leverage',''))}</dd>
-      <dt>Flags</dt><dd>{escape(row.get('Flags','').replace(',', ' ·'))}</dd>
-      <dt>Avail risk</dt><dd>{escape(row.get('Avail risk',''))}</dd>
-      <dt>Creative</dt><dd>{card['creative']}/100</dd>
-      <dt>Risk</dt><dd>{card['risk_norm']}/100 ({escape(card['risk_level'])})</dd>
-      <dt>ROI</dt><dd>{card['roi']}/100 · {escape(money(card['fee_mid']))} mid · {"+" if card['roi_delta_usd']>=0 else "−"}{escape(money(abs(card['roi_delta_usd'])))} ({"+" if card['roi_uplift_pct']>=0 else ""}{card['roi_uplift_pct']}%)</dd>
-      <dt>Role age</dt><dd>{escape(profile.get('Age',''))}</dd>
-      <dt>Look lock</dt><dd>{escape(profile.get('Ethnicity / look',''))}</dd>
-    </dl>
-    {icon_links(name, registry, {name: enrich_one}, prefix="../")}
+  <div class="info-tiles">
+    {casting_tile}
+    {score_tile}
+    {lock_tile}
+    {profiles_tile}
     {roi_box}
   </div>
 </section>

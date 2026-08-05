@@ -928,12 +928,20 @@ def reel_block(en: dict, depth: int = 0) -> str:
 
 
 def render_shortlist_section(role: dict, title: str, code: str, rows: list[dict], registry: dict, enrich: dict) -> str:
+    # Fit descending (ties keep original relative order via original #)
+    def fit_key(r: dict) -> tuple:
+        f = r.get("Fit", "")
+        fit_n = int(f) if str(f).isdigit() else -1
+        orig = int(r["#"]) if str(r.get("#", "")).isdigit() else 999
+        return (-fit_n, orig)
+
+    rows = sorted(rows, key=fit_key)
     head = f"""
 <section class="shortlist" data-reveal>
   <header class="section-head">
     <p class="eyebrow">Shortlist · Tier {escape(code)}</p>
     <h2>{escape(title)}</h2>
-    <p class="lede">Click any row for the actor-in-role shred page.</p>
+    <p class="lede">Ordered by Fit descending. Click any row for the actor-in-role shred page.</p>
   </header>
   <div class="table-wrap">
     <table class="cast-table">
@@ -945,7 +953,7 @@ def render_shortlist_section(role: dict, title: str, code: str, rows: list[dict]
       <tbody>
 """
     body_rows = []
-    for row in rows:
+    for i, row in enumerate(rows, 1):
         name = re.sub(r"\*+", "", row.get("Actor", "")).strip()
         if not name or name.startswith("CD Match"):
             # still show but no detail page for placeholders
@@ -956,7 +964,7 @@ def render_shortlist_section(role: dict, title: str, code: str, rows: list[dict]
         fee = row.get("Fee band", "")
         flags = row.get("Flags", "").replace(",", " ·")
         notes = row.get("Notes", "")
-        n = row.get("#", "")
+        n = i
         bio = shorten_bio((registry.get(name) or {}).get("bio") or "")
         hs = headshot_src(name, registry)
         avatar = avatar_html(hs, "sm", name)
@@ -969,7 +977,7 @@ def render_shortlist_section(role: dict, title: str, code: str, rows: list[dict]
         tr_attrs = f' data-href="{escape(href)}" tabindex="0" role="link"' if href else ""
         body_rows.append(
             f"""<tr{tr_attrs} data-reveal>
-  <td class="num">{escape(n).zfill(2) if str(n).isdigit() else escape(str(n))}</td>
+  <td class="num">{str(n).zfill(2)}</td>
   <td>{name_block}</td>
   <td><span class="tier tier-{code.lower()}">{escape(code)}</span></td>
   <td class="num">{escape(fit)}</td>

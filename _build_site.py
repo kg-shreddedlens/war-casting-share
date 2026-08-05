@@ -18,7 +18,7 @@ import shutil
 from datetime import date
 from html import escape
 from pathlib import Path
-from urllib.parse import quote
+from urllib.parse import quote, unquote
 
 from _scorecard import (
     SECTION1,
@@ -51,6 +51,7 @@ FONTS = (
 
 GALLERY_PATH = ROOT / "gallery_cache.json"
 GALLERY_LOCAL_PATH = ROOT / "gallery_local.json"
+GALLERY_SOURCES_PATH = ROOT / "gallery_sources.json"
 NOTES_EXPAND_PATH = ROOT / "notes_expand.json"
 
 # Shortlist Flags tokens → full sentences (shreds keep shorthand; site expands)
@@ -728,8 +729,10 @@ a{color:var(--ink)}a:hover{color:var(--accent)}
 @media(max-width:800px){.still-grid{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:520px){.still-grid{grid-template-columns:repeat(2,1fr)}}
 .still-grid figure{margin:0}
-.still-grid img{width:100%;aspect-ratio:1;height:auto;object-fit:cover;object-position:center 18%;border-radius:var(--radius);border:2px solid var(--ink);display:block;background:#eee;transition:transform .2s ease}
-.still-grid .avatar-wrap:hover img{transform:scale(1.04)}
+.still-grid a.still-link{display:block;text-decoration:none;color:inherit;border-radius:var(--radius)}
+.still-grid a.still-link:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.still-grid img{width:100%;aspect-ratio:1;height:auto;object-fit:cover;object-position:center 18%;border-radius:var(--radius);border:2px solid var(--ink);display:block;background:#eee;transition:transform .2s ease,border-color .2s ease}
+.still-grid a.still-link:hover img{transform:scale(1.04);border-color:var(--accent)}
 .carousel-empty{border:1px dashed var(--soft);padding:18px;color:var(--muted);font-size:14px;font-weight:500}
 [data-reveal]{opacity:0;transform:translateY(14px);transition:opacity .7s ease,transform .7s ease}
 [data-reveal].in{opacity:1;transform:none}
@@ -1096,32 +1099,142 @@ def extract_shortlists(md: str) -> list[tuple[str, str, list[dict]]]:
     return sections
 
 
+def _clean_remote_image_url(u: str) -> str:
+    u = (u or "").split("?")[0]
+    if not u or "svg" in u.lower():
+        return ""
+    # Wikimedia rejects arbitrary px sizes (e.g. 800); 500px is allowed
+    if "upload.wikimedia.org" in u and "/thumb/" in u:
+        u = re.sub(r"/\d+px-", "/500px-", u)
+    return u
+
+
+def remote_to_source_page(url: str) -> str:
+    """Turn a CDN/image URL into a browsable source page when possible."""
+    u = (url or "").strip()
+    if not u.startswith("http"):
+        return ""
+    bare = u.split("?")[0]
+    low = bare.lower()
+
+    if "upload.wikimedia.org" in low:
+        path = unquote(bare)
+        fname = path.rstrip("/").split("/")[-1]
+        fname = re.sub(r"^\d+px-", "", fname)
+        if fname:
+            return "https://commons.wikimedia.org/wiki/File:" + quote(fname.replace(" ", "_"))
+
+    if "gettyimages.com" in low:
+        m = re.search(r"/id/(\d+)/", bare)
+        if m:
+            return f"https://www.gettyimages.com/detail/news-photo/{m.group(1)}"
+        return "https://www.gettyimages.com/"
+
+    if "image.tmdb.org" in low:
+        # TMDB CDN has no stable public HTML page per file — keep the image URL.
+        return bare
+
+    if "media-amazon.com" in low or "m.media-amazon.com" in low:
+        return bare
+
+    if re.search(r"\.(jpe?g|png|webp|gif)$", low):
+        return bare
+
+    return u
+
+
+def actor_media_fallback(name: str, registry: dict, enrich_one: dict | None = None) -> str:
+    """Online page to open when a still has no per-file provenance."""
+    en = enrich_one or {}
+    wiki = en.get("wikipedia") or (FALLBACK_ENRICH.get(name) or {}).get("wikipedia") or ""
+    if wiki:
+        return wiki
+    rec = registry.get(name) or {}
+    imdb = rec.get("imdb_url") or ""
+    if not imdb and rec.get("imdb_id"):
+        imdb = f"https://www.imdb.com/name/{rec['imdb_id']}/"
+    if imdb:
+        return imdb.rstrip("/") + "/mediaindex/"
+    return "https://www.google.com/search?tbm=isch&q=" + quote(name)
+
+
+def _url_mentions_actor(url: str, name: str) -> bool:
+    tokens = [t for t in re.findall(r"[a-z]+", name.lower()) if len(t) > 2]
+    if not tokens:
+        return False
+    path = unquote(url).lower()
+    # Require last-name match when available
+    return tokens[-1] in path
+
+
+def load_remote_gallery() -> dict[str, list[str]]:
+    remote: dict[str, list[str]] = {}
+    if not GALLERY_PATH.exists():
+        return remote
+    raw = json.loads(GALLERY_PATH.read_text(encoding="utf-8"))
+    for name, urls in (raw or {}).items():
+        cleaned: list[str] = []
+        for u in urls or []:
+            cu = _clean_remote_image_url(u)
+            if cu and cu not in cleaned:
+                cleaned.append(cu)
+        remote[name] = cleaned
+    return remote
+
+
+def load_gallery_sources_file() -> dict[str, list[str]]:
+    if not GALLERY_SOURCES_PATH.exists():
+        return {}
+    try:
+        data = json.loads(GALLERY_SOURCES_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    return {k: [str(x or "") for x in (v or [])] for k, v in (data or {}).items()}
+
+
 def load_gallery() -> dict:
     """Prefer locally mirrored stills; fall back to cleaned remote URLs."""
     local: dict = {}
     if GALLERY_LOCAL_PATH.exists():
         local = json.loads(GALLERY_LOCAL_PATH.read_text(encoding="utf-8"))
-    remote: dict = {}
-    if GALLERY_PATH.exists():
-        remote = json.loads(GALLERY_PATH.read_text(encoding="utf-8"))
+    remote = load_remote_gallery()
     merged: dict[str, list[str]] = {}
     for name in set(local) | set(remote):
         locs = [u for u in (local.get(name) or []) if u]
         if locs:
             merged[name] = locs
-            continue
-        cleaned: list[str] = []
-        for u in remote.get(name) or []:
-            u = (u or "").split("?")[0]
-            if not u or "svg" in u.lower():
-                continue
-            # Wikimedia rejects arbitrary px sizes (e.g. 800); 500px is allowed
-            if "upload.wikimedia.org" in u and "/thumb/" in u:
-                u = re.sub(r"/\d+px-", "/500px-", u)
-            if u not in cleaned:
-                cleaned.append(u)
-        merged[name] = cleaned
+        else:
+            merged[name] = list(remote.get(name) or [])
     return merged
+
+
+def resolve_still_source(
+    name: str,
+    index: int,
+    display_url: str,
+    remote_urls: list[str],
+    explicit_sources: list[str],
+    registry: dict,
+    enrich_one: dict | None,
+) -> str:
+    """Pick the best online source page for a still at index."""
+    fallback = actor_media_fallback(name, registry, enrich_one)
+
+    if index < len(explicit_sources) and explicit_sources[index]:
+        page = remote_to_source_page(explicit_sources[index]) or explicit_sources[index]
+        if page.startswith("http"):
+            return page
+
+    if display_url.startswith("http"):
+        return remote_to_source_page(display_url) or display_url
+
+    # Align only remotes that look like they belong to this actor (avoids wrong group stills).
+    matched = [u for u in remote_urls if _url_mentions_actor(u, name)]
+    if index < len(matched):
+        return remote_to_source_page(matched[index]) or matched[index] or fallback
+    if index < len(remote_urls) and _url_mentions_actor(remote_urls[index], name):
+        return remote_to_source_page(remote_urls[index]) or remote_urls[index] or fallback
+    return fallback
 
 
 def extract_scorecards(md: str) -> list[dict]:
@@ -1249,37 +1362,56 @@ def icon_links(name: str, registry: dict, enrich: dict, prefix: str = "") -> str
     return f'<div class="icon-row">{"".join(links)}</div>' if links else ""
 
 
-def carousel_html(name: str, main_src: str | None, gallery: dict, depth: int = 0) -> str:
-    """5×5 still grid (up to 25). Prefer gallery stills; fall back to headshot only."""
+def carousel_html(
+    name: str,
+    main_src: str | None,
+    gallery: dict,
+    depth: int = 0,
+    registry: dict | None = None,
+    enrich_one: dict | None = None,
+    remote_gallery: dict | None = None,
+    gallery_sources: dict | None = None,
+) -> str:
+    """5×5 still grid (up to 25). Each still links to its online source page."""
     prefix = "../" * depth
-    urls: list[str] = []
+    registry = registry or {}
+    remote_urls = list((remote_gallery or {}).get(name) or [])
+    explicit = list((gallery_sources or {}).get(name) or [])
+    raw_paths: list[str] = []
     for u in gallery.get(name) or []:
-        if not u:
+        if not u or "svg" in u.lower():
             continue
-        src = u
-        if src.startswith("assets/"):
-            src = f"{prefix}{src}"
-        if src not in urls and "svg" not in src.lower():
-            urls.append(src)
-    board = [u for u in urls if u != main_src]
-    if not board and main_src:
-        board = [main_src]
-    board = board[:25]
-    if not board:
+        if u not in raw_paths:
+            raw_paths.append(u)
+    # Drop duplicate of the hero headshot path when both point at the same asset
+    board_raw = [u for u in raw_paths if (prefix + u if u.startswith("assets/") else u) != main_src and u != main_src]
+    if not board_raw and raw_paths:
+        board_raw = list(raw_paths)
+    if not board_raw and main_src:
+        board_raw = [main_src]
+    board_raw = board_raw[:25]
+    if not board_raw:
         return f"""
 <div class="gallery-block" data-reveal>
   <p class="eyebrow">Image board</p>
   <p class="carousel-empty">No stills for {escape(name)} yet — headshot only above.</p>
 </div>
 """
-    figs = [
-        f'<figure class="avatar-wrap"><img src="{escape(u)}" alt="{escape(name)}" loading="lazy" /></figure>'
-        for u in board
-    ]
-    plural = "s" if len(board) != 1 else ""
+    figs: list[str] = []
+    for i, raw in enumerate(board_raw):
+        src = f"{prefix}{raw}" if raw.startswith("assets/") else raw
+        href = resolve_still_source(name, i, raw, remote_urls, explicit, registry, enrich_one)
+        figs.append(
+            f'<figure class="avatar-wrap">'
+            f'<a class="still-link" href="{escape(href)}" target="_blank" rel="noopener noreferrer" '
+            f'title="Open source for {escape(name)} still">'
+            f'<img src="{escape(src)}" alt="{escape(name)}" loading="lazy" />'
+            f"</a></figure>"
+        )
+    plural = "s" if len(board_raw) != 1 else ""
     return f"""
 <div class="gallery-block" data-reveal>
-  <p class="eyebrow">Image board · {len(board)} still{plural} · 5×5 grid</p>
+  <p class="eyebrow">Image board · {len(board_raw)} still{plural} · 5×5 grid · click any still for source</p>
   <div class="still-grid">{''.join(figs)}</div>
 </div>
 """
@@ -1760,7 +1892,15 @@ def render_character(meta: dict, registry: dict, enrich: dict) -> tuple[str, lis
     return shell(meta["title"], meta["slug"], body), actor_pages
 
 
-def render_actor_page(name: str, payload: dict, enrich_one: dict, registry: dict, gallery: dict) -> str:
+def render_actor_page(
+    name: str,
+    payload: dict,
+    enrich_one: dict,
+    registry: dict,
+    gallery: dict,
+    remote_gallery: dict | None = None,
+    gallery_sources: dict | None = None,
+) -> str:
     role = payload["role"]
     row = payload["row"]
     sc = payload["scorecard"]
@@ -1796,7 +1936,16 @@ def render_actor_page(name: str, payload: dict, enrich_one: dict, registry: dict
         card=card,
     )
 
-    car = carousel_html(name, hs, gallery, depth=1)
+    car = carousel_html(
+        name,
+        hs,
+        gallery,
+        depth=1,
+        registry=registry,
+        enrich_one=enrich_one,
+        remote_gallery=remote_gallery,
+        gallery_sources=gallery_sources,
+    )
 
     links = icon_links(name, registry, {name: enrich_one}, prefix="../")
     casting_tile = info_tile(
@@ -2257,6 +2406,8 @@ def main() -> None:
     registry = load_registry()
     enrich = load_enrichment()
     gallery = load_gallery()
+    remote_gallery = load_remote_gallery()
+    gallery_sources = load_gallery_sources_file()
     expand_markdown_scorecards()
 
     # gather needed actor names
@@ -2283,7 +2434,18 @@ def main() -> None:
     written = 0
     for name, payload, en in all_actor_pages:
         path = OUT / actor_slug_path(payload["role"]["slug"], name)
-        path.write_text(render_actor_page(name, payload, en, registry, gallery), encoding="utf-8")
+        path.write_text(
+            render_actor_page(
+                name,
+                payload,
+                en,
+                registry,
+                gallery,
+                remote_gallery=remote_gallery,
+                gallery_sources=gallery_sources,
+            ),
+            encoding="utf-8",
+        )
         written += 1
 
     print(f"wrote site to {OUT} with {written} actor detail pages; gallery keys={len(gallery)}")

@@ -585,7 +585,7 @@ a{color:var(--ink)}a:hover{color:var(--accent)}
 .attr{border:1px solid var(--ink);padding:10px 12px;background:#fff}
 .attr b{display:block;font-family:"DM Sans",sans-serif;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
 .attr span{font-family:"Bebas Neue",sans-serif;font-size:1.55rem}
-.scorecard-full{margin-top:8px;max-width:980px}
+.scorecard-full{margin:8px auto 0;max-width:680px}
 .sc-panel{border:1px solid var(--ink);border-bottom:4px solid var(--ink);background:#fff;margin:28px 0 0;overflow:hidden}
 .sc-panel-head{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:end;padding:22px 22px 18px;border-bottom:2px solid var(--ink);background:#fafaf8}
 .sc-panel-titles{min-width:0}
@@ -688,13 +688,13 @@ a{color:var(--ink)}a:hover{color:var(--accent)}
 .kv{display:grid;grid-template-columns:min(38%,150px) 1fr;gap:12px 14px;margin:0}
 .kv dt{font-family:"DM Sans",sans-serif;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;padding-top:3px}
 .kv dd{margin:0;font-weight:600;line-height:1.4;font-size:16px;max-width:42ch;overflow-wrap:anywhere}
-.gallery-block{margin:8px 0 28px;width:100%}
-.carousel{display:flex;gap:12px;overflow-x:auto;padding:6px 2px 14px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;width:100%}
-.carousel::-webkit-scrollbar{height:6px}
-.carousel::-webkit-scrollbar-thumb{background:#bbb;border-radius:99px}
-.carousel figure{margin:0;flex:0 0 clamp(160px,18vw,220px);scroll-snap-align:start}
-.carousel img{width:100%;aspect-ratio:1;height:auto;object-fit:cover;object-position:center 18%;border-radius:var(--radius);border:2px solid var(--ink);display:block;transition:transform .25s ease}
-.carousel .avatar-wrap:hover img{transform:scale(1.28)}
+.gallery-block{margin:28px 0;width:100%;max-width:920px}
+.still-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:10px}
+@media(max-width:800px){.still-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:520px){.still-grid{grid-template-columns:repeat(2,1fr)}}
+.still-grid figure{margin:0}
+.still-grid img{width:100%;aspect-ratio:1;height:auto;object-fit:cover;object-position:center 18%;border-radius:var(--radius);border:2px solid var(--ink);display:block;background:#eee;transition:transform .2s ease}
+.still-grid .avatar-wrap:hover img{transform:scale(1.04)}
 .carousel-empty{border:1px dashed var(--soft);padding:18px;color:var(--muted);font-size:14px;font-weight:500}
 [data-reveal]{opacity:0;transform:translateY(14px);transition:opacity .7s ease,transform .7s ease}
 [data-reveal].in{opacity:1;transform:none}
@@ -893,6 +893,64 @@ def fit_criteria_html(fit: str) -> str:
 def score_num(text: str) -> int | None:
     m = re.search(r"(\d+)", text or "")
     return int(m.group(1)) if m else None
+
+
+def why_this_lane_html(name: str, row: dict, card: dict, profile: dict) -> str:
+    """Richer casting rationale for the Why this lane tile."""
+    fit = row.get("Fit") or "—"
+    fee = fee_quantified(row.get("Fee band", "") or "")
+    lev = row.get("Leverage") or "—"
+    avail = row.get("Avail risk") or "—"
+    flags = expand_flags(row.get("Flags", "") or "")
+    note = expand_notes(
+        (card.get("note") if card else None) or row.get("Notes", "") or ""
+    )
+    creative = card.get("creative", "—")
+    clearance = card.get("risk_clearance", "—")
+    roi = card.get("roi", "—")
+    cost_100 = card.get("cost_100", "—")
+    value_100 = card.get("value_100", "—")
+    look = (profile.get("Ethnicity / look") or "").strip()
+    core = (profile.get("Emotional core") or "").strip()
+
+    bullets = [
+        f"Shortlist Fit <strong>{escape(str(fit))}/10</strong> at fee <strong>{escape(fee)}</strong> "
+        f"(leverage {escape(str(lev))}, avail risk {escape(str(avail))}).",
+        f"Scoreboard: Creative <strong>{escape(str(creative))}/100</strong>, "
+        f"Risk clearance <strong>{escape(str(clearance))}/100</strong>, "
+        f"ROI <strong>{escape(str(roi))}/100</strong> "
+        f"(cost efficiency {escape(str(cost_100))}/100 · value {escape(str(value_100))}/100).",
+    ]
+    if flags:
+        bullets.append(f"Casting flags: {escape(flags)}")
+    if look:
+        bullets.append(f"Look lock check: {escape(look)}")
+    if core:
+        bullets.append(f"Emotional core this hire must hit: {escape(core)}")
+    if note:
+        bullets.append(f"Lane note: {escape(note)}")
+    else:
+        bullets.append(
+            f"<strong>{escape(name)}</strong> is in this lane for fit-to-role and packaging utility "
+            f"against the WAR brief — not as a generic prestige attach."
+        )
+
+    # Fee / risk plain-English stakes
+    fee_l = (row.get("Fee band") or "").lower()
+    if "extremely" in fee_l:
+        bullets.append(
+            "Ugly truth: Extremely High fee only works with backend discipline — "
+            "otherwise ROI collapses even when Creative is elite."
+        )
+    elif "high" in fee_l and "med" not in fee_l.replace(" ", ""):
+        bullets.append(
+            "Caveat: High fee needs a clear sales or craft reason; do not treat the name as free packaging."
+        )
+    if str(avail).lower() == "high":
+        bullets.append("Scheduling/access risk is High — keep a parallel LOI live.")
+
+    lis = "".join(f"<li>{b}</li>" for b in bullets)
+    return f'<ul class="slist-bio-list why-lane">{lis}</ul>'
 
 
 def _roi_mini(label: str, value: str, sub: str = "") -> str:
@@ -1157,7 +1215,7 @@ def icon_links(name: str, registry: dict, enrich: dict, prefix: str = "") -> str
 
 
 def carousel_html(name: str, main_src: str | None, gallery: dict, depth: int = 0) -> str:
-    """Unique actor-only stills. Never pad with role portraits or duplicate cycles."""
+    """5×5 still grid (up to 25). Prefer gallery stills; fall back to headshot only."""
     prefix = "../" * depth
     urls: list[str] = []
     for u in gallery.get(name) or []:
@@ -1176,7 +1234,7 @@ def carousel_html(name: str, main_src: str | None, gallery: dict, depth: int = 0
         return f"""
 <div class="gallery-block" data-reveal>
   <p class="eyebrow">Image board</p>
-  <p class="carousel-empty">No verified stills for {escape(name)} yet — headshot only above.</p>
+  <p class="carousel-empty">No stills for {escape(name)} yet — headshot only above.</p>
 </div>
 """
     figs = [
@@ -1186,8 +1244,8 @@ def carousel_html(name: str, main_src: str | None, gallery: dict, depth: int = 0
     plural = "s" if len(board) != 1 else ""
     return f"""
 <div class="gallery-block" data-reveal>
-  <p class="eyebrow">Image board · {len(board)} still{plural}</p>
-  <div class="carousel">{''.join(figs)}</div>
+  <p class="eyebrow">Image board · {len(board)} still{plural} · 5×5 grid</p>
+  <div class="still-grid">{''.join(figs)}</div>
 </div>
 """
 
@@ -1681,7 +1739,6 @@ def render_actor_page(name: str, payload: dict, enrich_one: dict, registry: dict
     car = carousel_html(name, hs, gallery, depth=1)
 
     links = icon_links(name, registry, {name: enrich_one}, prefix="../")
-    lane_note = card.get("note") or note or expand_notes(row.get("Notes", "") or "")
     casting_tile = info_tile(
         "Casting lane",
         [
@@ -1704,6 +1761,19 @@ def render_actor_page(name: str, payload: dict, enrich_one: dict, registry: dict
                 f"({escape(card['risk_level'])} residual)",
             ),
             ("ROI", f"{card['roi']}/100"),
+            ("Cost efficiency", f"{card.get('cost_100', '—')}/100"),
+            ("Value index", f"{card.get('value_100', '—')}/100"),
+            ("Fee midpoint", escape(money(card["fee_mid"]))),
+            (
+                "Fee delta",
+                (
+                    f"{'+' if card['roi_delta_usd'] >= 0 else '−'}"
+                    f"{escape(money(abs(card['roi_delta_usd'])))} "
+                    f"({'+' if card['roi_uplift_pct'] >= 0 else ''}"
+                    f"{card['roi_uplift_pct']}%)"
+                ),
+            ),
+            ("Verdict", escape(card.get("verdict") or "—")),
         ],
     )
     lock_tile = info_tile(
@@ -1717,7 +1787,8 @@ def render_actor_page(name: str, payload: dict, enrich_one: dict, registry: dict
     why_tile = info_tile(
         "Why this lane",
         [],
-        extra=f'<p class="info-prose">{escape(lane_note or "—")}</p>',
+        span2=True,
+        extra=why_this_lane_html(name, row, card, profile),
     )
     bio_tile = info_tile(
         "Bio",
@@ -1728,6 +1799,7 @@ def render_actor_page(name: str, payload: dict, enrich_one: dict, registry: dict
         info_tile("Profiles", [], extra=links) if links else ""
     )
 
+    # Scorecard early (before image board) so the page doesn't feel blank on scroll.
     body = f"""
 <header class="hero" data-reveal>
   <div class="hero-copy">
@@ -1737,6 +1809,7 @@ def render_actor_page(name: str, payload: dict, enrich_one: dict, registry: dict
     <div class="cta">
       <a class="btn" href="../{escape(role['slug'])}.html">Back to {escape(role['hero'])}</a>
       <a class="btn ghost" href="../index.html">Overview</a>
+      <a class="btn ghost" href="#scorecard">Scorecard</a>
     </div>
   </div>
 </header>
@@ -1748,17 +1821,17 @@ def render_actor_page(name: str, payload: dict, enrich_one: dict, registry: dict
     {casting_tile}
     {score_tile}
     {lock_tile}
-    {why_tile}
     {bio_tile}
     {profiles_tile}
+    {why_tile}
     {roi_box}
   </div>
 </section>
-{car}
-{reel_block(enrich_one)}
-<section data-reveal>
+<section id="scorecard" data-reveal>
   {sc_html}
 </section>
+{car}
+{reel_block(enrich_one)}
 """
     return shell(f"{name} · {role['title']}", role["slug"], body, depth=1)
 

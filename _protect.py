@@ -164,13 +164,50 @@ def main() -> None:
     # staticrypt flattens paths; restore actors/ so relative links work
     restore_actors_dir(DIST)
 
-    # Copy static assets (portraits, headshots) beside encrypted HTML
+    # Copy static assets (portraits, headshots, galleries) beside encrypted HTML.
+    # Prefer robocopy on Windows — Dropbox locks often truncate shutil.copytree mid-run.
     src_assets = SITE / "assets"
     if src_assets.exists():
         dst_assets = DIST / "assets"
-        _rmtree_retry(dst_assets)
-        shutil.copytree(src_assets, dst_assets)
-        print(f"copied assets -> {dst_assets}")
+        dst_assets.mkdir(parents=True, exist_ok=True)
+        if sys.platform.startswith("win"):
+            cmd = [
+                "robocopy",
+                str(src_assets),
+                str(dst_assets),
+                "/E",
+                "/NFL",
+                "/NDL",
+                "/NJH",
+                "/NJS",
+                "/nc",
+                "/ns",
+                "/np",
+                "/R:4",
+                "/W:1",
+            ]
+            r = subprocess.run(cmd, shell=False)
+            # robocopy: 0–7 are success/partial; >=8 is failure
+            if r.returncode >= 8:
+                print("robocopy failed", r.returncode, "— falling back to copytree")
+                _rmtree_retry(dst_assets)
+                shutil.copytree(src_assets, dst_assets)
+        else:
+            _rmtree_retry(dst_assets)
+            shutil.copytree(src_assets, dst_assets)
+        # Sanity: gallery file counts should match site
+        src_g = src_assets / "galleries"
+        dst_g = dst_assets / "galleries"
+        if src_g.exists():
+            src_n = sum(1 for _ in src_g.rglob("*.*"))
+            dst_n = sum(1 for _ in dst_g.rglob("*.*")) if dst_g.exists() else 0
+            print(f"copied assets -> {dst_assets} (gallery files {dst_n}/{src_n})")
+            if dst_n < src_n:
+                print("WARNING: dist galleries incomplete — retrying copytree")
+                _rmtree_retry(dst_assets)
+                shutil.copytree(src_assets, dst_assets)
+        else:
+            print(f"copied assets -> {dst_assets}")
 
     # Copy a note
     (DIST / "README.md").write_text(

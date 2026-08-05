@@ -335,18 +335,39 @@ def build_full_scorecard(
     }
 
 
+def sc_row(
+    title: str,
+    prompt: str,
+    score: int | str,
+    *,
+    meta: str = "",
+    denom: str = "10",
+) -> str:
+    meta_html = f'<p class="sc-meta">{escape(meta)}</p>' if meta else ""
+    return f"""<li class="sc-row">
+  <div class="sc-row-copy">
+    <h4 class="sc-cat">{escape(title)}</h4>
+    <p class="sc-prompt">{escape(prompt)}</p>
+    {meta_html}
+  </div>
+  <div class="sc-score" aria-label="Score {escape(str(score))} of {escape(denom)}">
+    <span class="sc-score-n">{escape(str(score))}</span>
+    <span class="sc-score-den">/{escape(denom)}</span>
+  </div>
+</li>"""
+
+
 def section1_rows_html(scores: list[int]) -> str:
     rows = []
     for (name, weight, prompt), score in zip(SECTION1, scores):
         wscore = weighted(score, weight)
         rows.append(
-            "<tr>"
-            f"<td>{escape(name)}</td>"
-            f"<td class='num'>{weight}</td>"
-            f"<td class='num'><strong>{score}</strong></td>"
-            f"<td class='num'>{wscore:g}</td>"
-            f"<td>{escape(prompt)}</td>"
-            "</tr>"
+            sc_row(
+                name,
+                prompt,
+                score,
+                meta=f"Weight {weight} · Weighted {wscore:g}",
+            )
         )
     return "\n".join(rows)
 
@@ -354,35 +375,89 @@ def section1_rows_html(scores: list[int]) -> str:
 def section2_rows_html(scores: list[int]) -> str:
     rows = []
     for (name, prompt), score in zip(SECTION2, scores):
-        rows.append(
-            "<tr>"
-            f"<td>{escape(name)}</td>"
-            f"<td class='num'><strong>{score}</strong></td>"
-            f"<td>{escape(prompt)}</td>"
-            "</tr>"
-        )
+        rows.append(sc_row(name, prompt, score))
     return "\n".join(rows)
 
 
-def section3_rows_html(items: list[tuple[str, int, str]], scores: list[int], score_header: str) -> str:
+def section3_rows_html(items: list[tuple[str, int, str]], scores: list[int]) -> str:
     rows = []
     for (name, weight, prompt), score in zip(items, scores):
-        rows.append(
-            "<tr>"
-            f"<td>{escape(name)}</td>"
-            f"<td class='num'>{weight}</td>"
-            f"<td class='num'><strong>{score}</strong></td>"
-            f"<td>{escape(prompt)}</td>"
-            "</tr>"
-        )
+        rows.append(sc_row(name, prompt, score, meta=f"Weight {weight}"))
     return "\n".join(rows)
+
+
+def sc_panel(
+    title: str,
+    note: str,
+    rows_html: str,
+    foot_label: str,
+    foot_value: str,
+    *,
+    badge: str = "",
+) -> str:
+    badge_html = f'<div class="sc-badge">{badge}</div>' if badge else ""
+    return f"""<article class="sc-panel">
+  <header class="sc-panel-head">
+    <div class="sc-panel-titles">
+      <h3 class="sc-h">{escape(title)}</h3>
+      <p class="sc-note">{escape(note)}</p>
+    </div>
+    {badge_html}
+  </header>
+  <ol class="sc-rows">
+    {rows_html}
+  </ol>
+  <footer class="sc-panel-foot">
+    <span class="sc-foot-label">{escape(foot_label)}</span>
+    <span class="sc-foot-value">{foot_value}</span>
+  </footer>
+</article>"""
 
 
 def full_scorecard_html(card: dict) -> str:
     s1 = section1_rows_html(card["section1"])
     s2 = section2_rows_html(card["section2"])
-    c3 = section3_rows_html(SECTION3_COST, card["section3_cost"], "Cost Burden")
-    v3 = section3_rows_html(SECTION3_VALUE, card["section3_value"], "Value Potential")
+    c3 = section3_rows_html(SECTION3_COST, card["section3_cost"])
+    v3 = section3_rows_html(SECTION3_VALUE, card["section3_value"])
+
+    p1 = sc_panel(
+        "Section 1 · Creative + Commercial Fit",
+        "100 pts total. Weighted = Score × Weight ÷ 10.",
+        s1,
+        "Total Weighted Score",
+        f"<strong>{card['creative']}</strong><span class='sc-foot-den'>/100</span>",
+        badge=f"<span class='sc-badge-n'>{card['creative']}</span><span class='sc-badge-den'>/100</span>",
+    )
+    p2 = sc_panel(
+        "Section 2 · Red Flags Risk Index",
+        "Lower is better. Raw /70 → normalized /100. High scores require mitigation.",
+        s2,
+        "Total Red Flag Score",
+        (
+            f"<strong>{card['risk_raw']}</strong><span class='sc-foot-den'>/70</span>"
+            f"<span class='sc-foot-extra'> · {card['risk_norm']}/100 · {escape(card['risk_level'])} Risk</span>"
+        ),
+        badge=(
+            f"<span class='sc-badge-n'>{card['risk_norm']}</span>"
+            f"<span class='sc-badge-den'>/100</span>"
+        ),
+    )
+    p3a = sc_panel(
+        "Section 3a · Cost Dimensions",
+        "0 = very expensive/painful · 10 = extremely low-cost/easy. Max subtotal 35.",
+        c3,
+        "Cost Subtotal",
+        f"<strong>{card['cost_sub']:g}</strong><span class='sc-foot-den'>/35</span>",
+        badge=f"<span class='sc-badge-n'>{card['cost_sub']:g}</span><span class='sc-badge-den'>/35</span>",
+    )
+    p3b = sc_panel(
+        "Section 3b · Value Dimensions",
+        "0 = adds no value · 10 = extremely valuable. Max subtotal 65.",
+        v3,
+        "Value Subtotal",
+        f"<strong>{card['value_sub']:g}</strong><span class='sc-foot-den'>/65</span>",
+        badge=f"<span class='sc-badge-n'>{card['value_sub']:g}</span><span class='sc-badge-den'>/65</span>",
+    )
 
     return f"""
 <div class="scorecard-full">
@@ -391,93 +466,9 @@ def full_scorecard_html(card: dict) -> str:
     <h2>{escape(card['verdict'])}</h2>
     <p class="lede">{escape(card['composite'])}</p>
   </header>
-
-  <h3 class="sc-h">Section 1 · Creative + Commercial Fit</h3>
-  <p class="sc-note">100 pts total. Weighted = Score × Weight ÷ 10.</p>
-  <div class="table-wrap sc-table-wrap">
-    <table class="sc-table">
-      <thead>
-        <tr>
-          <th>Category</th><th>Weight</th><th>Score (0–10)</th><th>Weighted</th><th>Comments</th>
-        </tr>
-      </thead>
-      <tbody>
-        {s1}
-      </tbody>
-      <tfoot>
-        <tr>
-          <td colspan="3"><strong>Total Weighted Score (Creative + Commercial)</strong></td>
-          <td class="num"><strong>{card['creative']}/100</strong></td>
-          <td></td>
-        </tr>
-      </tfoot>
-    </table>
-  </div>
-
-  <h3 class="sc-h">Section 2 · Red Flags Risk Index</h3>
-  <p class="sc-note">Lower is better. Raw /70 → normalized /100. High scores require mitigation.</p>
-  <div class="table-wrap sc-table-wrap">
-    <table class="sc-table">
-      <thead>
-        <tr>
-          <th>Risk Category</th><th>Score (0–10)</th><th>Comments / Evidence</th>
-        </tr>
-      </thead>
-      <tbody>
-        {s2}
-      </tbody>
-      <tfoot>
-        <tr>
-          <td><strong>Total Red Flag Score</strong></td>
-          <td class="num"><strong>{card['risk_raw']}/70</strong></td>
-          <td>Normalized <strong>{card['risk_norm']}/100</strong> · <strong>{escape(card['risk_level'])} Risk</strong></td>
-        </tr>
-      </tfoot>
-    </table>
-  </div>
-
-  <h3 class="sc-h">Section 3a · Cost Dimensions</h3>
-  <p class="sc-note">0 = very expensive/painful · 10 = extremely low-cost/easy. Max subtotal 35.</p>
-  <div class="table-wrap sc-table-wrap">
-    <table class="sc-table">
-      <thead>
-        <tr>
-          <th>Category</th><th>Weight</th><th>Score (0–10)</th><th>Cost Burden Level</th>
-        </tr>
-      </thead>
-      <tbody>
-        {c3}
-      </tbody>
-      <tfoot>
-        <tr>
-          <td colspan="2"><strong>Cost Subtotal</strong></td>
-          <td class="num"><strong>{card['cost_sub']:g}/35</strong></td>
-          <td></td>
-        </tr>
-      </tfoot>
-    </table>
-  </div>
-
-  <h3 class="sc-h">Section 3b · Value Dimensions</h3>
-  <p class="sc-note">0 = adds no value · 10 = extremely valuable. Max subtotal 65.</p>
-  <div class="table-wrap sc-table-wrap">
-    <table class="sc-table">
-      <thead>
-        <tr>
-          <th>Category</th><th>Weight</th><th>Score (0–10)</th><th>Value Potential</th>
-        </tr>
-      </thead>
-      <tbody>
-        {v3}
-      </tbody>
-      <tfoot>
-        <tr>
-          <td colspan="2"><strong>Value Subtotal</strong></td>
-          <td class="num"><strong>{card['value_sub']:g}/65</strong></td>
-          <td></td>
-        </tr>
-      </tfoot>
-    </table>
-  </div>
+  {p1}
+  {p2}
+  {p3a}
+  {p3b}
 </div>
 """

@@ -24,6 +24,8 @@ from _scorecard import (
     build_full_scorecard,
     full_scorecard_html,
     money,
+    sc_panel,
+    sc_row,
     score_num as sc_score_num,
     weighted as sc_weighted,
 )
@@ -299,17 +301,51 @@ a{color:var(--ink)}a:hover{color:var(--accent)}
 .attr{border:1px solid var(--ink);padding:10px 12px;background:#fff}
 .attr b{display:block;font-family:"DM Sans",sans-serif;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
 .attr span{font-family:"Bebas Neue",sans-serif;font-size:1.55rem}
-.scorecard-full{margin-top:8px}
-.sc-h{font-family:"Bebas Neue",sans-serif;font-size:1.55rem;letter-spacing:.03em;margin:36px 0 6px}
-.sc-note{margin:0 0 12px;color:var(--muted);font-size:13px;font-weight:500;line-height:1.4}
-.sc-table-wrap{border:1px solid var(--ink);border-bottom:3px solid var(--ink);margin-bottom:8px}
-.sc-table{width:100%;border-collapse:collapse;min-width:720px;background:#fff}
-.sc-table th,.sc-table td{padding:10px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--soft);font-size:13.5px}
-.sc-table th{font-family:"DM Sans",sans-serif;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;border-bottom:2px solid var(--ink);background:#fafaf8}
-.sc-table td{font-weight:500;line-height:1.4}
-.sc-table td.num,.sc-table th.num{font-variant-numeric:tabular-nums;white-space:nowrap}
-.sc-table tfoot td{border-bottom:0;background:#f3f3f1;font-weight:600}
-.sc-table tbody tr:hover{background:#f7f7f5}.pkg-grid{display:grid;gap:12px;margin-top:16px}
+.scorecard-full{margin-top:8px;max-width:720px}
+.sc-panel{border:1px solid var(--ink);border-bottom:4px solid var(--ink);background:#fff;margin:28px 0 0;overflow:hidden}
+.sc-panel-head{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:end;padding:22px 22px 18px;border-bottom:2px solid var(--ink);background:#fafaf8}
+.sc-panel-titles{min-width:0}
+.sc-h{font-family:"Bebas Neue",sans-serif;font-size:clamp(1.85rem,4vw,2.35rem);letter-spacing:.03em;margin:0;line-height:.95}
+.sc-note{margin:10px 0 0;color:var(--muted);font-size:15px;font-weight:500;line-height:1.45;max-width:42ch}
+.sc-badge{text-align:right;line-height:1;font-variant-numeric:tabular-nums}
+.sc-badge-n{font-family:"Bebas Neue",sans-serif;font-size:clamp(2.8rem,6vw,3.6rem);letter-spacing:.02em;display:block}
+.sc-badge-den{font-family:"DM Sans",sans-serif;font-size:14px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.sc-rows{list-style:none;margin:0;padding:0}
+.sc-row{display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center;padding:18px 22px;border-bottom:1px solid var(--soft)}
+.sc-row:last-child{border-bottom:0}
+.sc-row:hover{background:#f7f7f5}
+.sc-cat{font-family:"Bebas Neue",sans-serif;font-size:clamp(1.35rem,3vw,1.7rem);letter-spacing:.03em;margin:0;line-height:1}
+.sc-prompt{margin:8px 0 0;color:var(--muted);font-size:15.5px;line-height:1.45;font-weight:500;max-width:38ch}
+.sc-meta{margin:8px 0 0;font-family:"DM Sans",sans-serif;font-size:12px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;color:var(--muted)}
+.sc-score{text-align:right;line-height:1;font-variant-numeric:tabular-nums;min-width:4.5rem}
+.sc-score-n{font-family:"Bebas Neue",sans-serif;font-size:clamp(2.4rem,5vw,3.1rem);letter-spacing:.02em}
+.sc-score-den{font-family:"DM Sans",sans-serif;font-size:13px;font-weight:700;color:var(--muted);letter-spacing:.04em;margin-left:2px}
+.sc-panel-foot{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;padding:16px 22px;background:#111;color:#fff;border-top:2px solid var(--ink)}
+.sc-foot-label{font-family:"DM Sans",sans-serif;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;opacity:.75}
+.sc-foot-value{font-family:"Bebas Neue",sans-serif;font-size:clamp(1.7rem,4vw,2.2rem);letter-spacing:.03em;line-height:1}
+.sc-foot-value strong{font-weight:400}
+.sc-foot-den{font-family:"DM Sans",sans-serif;font-size:14px;font-weight:700;letter-spacing:.04em;opacity:.7;margin-left:2px}
+.sc-foot-extra{font-family:"DM Sans",sans-serif;font-size:13px;font-weight:600;letter-spacing:.02em;opacity:.8;margin-left:6px}
+.sc-preview{margin-top:14px;max-width:100%}
+.sc-preview .sc-panel{margin-top:0}
+.sc-preview .sc-panel-head{padding:14px 16px 12px}
+.sc-preview .sc-h{font-size:1.45rem}
+.sc-preview .sc-note{font-size:13px;margin-top:6px}
+.sc-preview .sc-badge-n{font-size:2.2rem}
+.sc-preview .sc-row{padding:12px 16px;gap:12px}
+.sc-preview .sc-cat{font-size:1.2rem}
+.sc-preview .sc-prompt{font-size:13.5px;margin-top:5px}
+.sc-preview .sc-meta{font-size:11px;margin-top:5px}
+.sc-preview .sc-score-n{font-size:2rem}
+.sc-preview .sc-panel-foot{padding:12px 16px}
+.sc-preview .sc-foot-value{font-size:1.45rem}
+@media(max-width:560px){
+  .sc-panel-head{grid-template-columns:1fr;align-items:start}
+  .sc-badge{text-align:left}
+  .sc-row{grid-template-columns:1fr;gap:10px}
+  .sc-score{text-align:left}
+}
+.pkg-grid{display:grid;gap:12px;margin-top:16px}
 .pkg{border:1px solid var(--ink);padding:16px 18px;display:grid;gap:8px}
 .pkg.primary{border-width:3px}
 .pkg h3{font-family:"Bebas Neue",sans-serif;font-size:1.5rem;margin:0;letter-spacing:.03em}
@@ -1050,21 +1086,35 @@ def render_character(meta: dict, registry: dict, enrich: dict) -> tuple[str, lis
                     score_map[full] = n
             for name_cat, weight, prompt in SECTION1:
                 score = score_map.get(name_cat, "—")
-                wscore = sc_weighted(int(score), weight) if str(score).isdigit() else "—"
-                preview_rows.append(
-                    f"<tr><td>{escape(name_cat)}</td><td class='num'>{weight}</td>"
-                    f"<td class='num'><strong>{escape(str(score))}</strong></td>"
-                    f"<td class='num'>{wscore if wscore=='—' else f'{wscore:g}'}</td>"
-                    f"<td>{escape(prompt)}</td></tr>"
-                )
+                if str(score).isdigit():
+                    wscore = sc_weighted(int(score), weight)
+                    row_meta = f"Weight {weight} · Weighted {wscore:g}"
+                else:
+                    row_meta = f"Weight {weight}"
+                preview_rows.append(sc_row(name_cat, prompt, score, meta=row_meta))
+            m = re.search(r"(\d+)", c.get("creative") or "")
+            creative_preview = int(m.group(1)) if m else None
+            badge = (
+                f"<span class='sc-badge-n'>{creative_preview}</span><span class='sc-badge-den'>/100</span>"
+                if creative_preview is not None
+                else ""
+            )
+            foot_val = (
+                f"<strong>{creative_preview}</strong><span class='sc-foot-den'>/100</span>"
+                if creative_preview is not None
+                else "<strong>—</strong>"
+            )
             preview = f"""
-<div class="table-wrap sc-table-wrap" style="margin-top:12px">
-  <table class="sc-table">
-    <thead><tr><th>Category</th><th>Weight</th><th>Score</th><th>Weighted</th><th>Comments</th></tr></thead>
-    <tbody>{''.join(preview_rows)}</tbody>
-  </table>
+<div class="sc-preview">
+  {sc_panel(
+      "Section 1 · Creative + Commercial Fit",
+      "Open actor shred for Sections 2–3 (Risk + ROI) and full fee $/%.",
+      "".join(preview_rows),
+      "Total Weighted Score",
+      foot_val,
+      badge=badge,
+  )}
 </div>
-<p class="sc-note" style="margin-top:8px">Open actor shred for Sections 2–3 (Risk + ROI) and full fee $/%.</p>
 """
             card_html.append(
                 f"""<a class="card" href="{escape(href)}" data-reveal style="grid-template-columns:auto 1fr">

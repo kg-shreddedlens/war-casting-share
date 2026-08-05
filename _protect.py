@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import hashlib
 import secrets
+import shutil
 import string
 import subprocess
 import sys
@@ -29,6 +30,20 @@ def gen_password(n: int = 14) -> str:
     return "".join(secrets.choice(alphabet) for _ in range(n))
 
 
+def restore_actors_dir(dist: Path) -> None:
+    """Move flattened actor detail pages back into dist/actors/."""
+    role_slugs = ("sheila", "james", "samantha", "melina", "norman")
+    actors_dir = dist / "actors"
+    actors_dir.mkdir(parents=True, exist_ok=True)
+    moved = 0
+    for path in list(dist.glob("*.html")):
+        name = path.name
+        if any(name.startswith(f"{slug}-") for slug in role_slugs):
+            path.replace(actors_dir / name)
+            moved += 1
+    print(f"restored {moved} actor pages under actors/")
+
+
 def patch_always_remember(dist: Path) -> None:
     """Force permanent remember-me on successful unlock (no checkbox required)."""
     old = (
@@ -44,14 +59,15 @@ def patch_always_remember(dist: Path) -> None:
         '                        document.getElementById("staticrypt-remember-label").classList.remove("hidden");\n'
         "                    }"
     )
-    for path in dist.glob("*.html"):
+    paths = list(dist.rglob("*.html"))
+    for path in paths:
         text = path.read_text(encoding="utf-8")
         if old not in text:
-            raise SystemExit(f"remember patch target missing in {path.name}")
+            raise SystemExit(f"remember patch target missing in {path}")
         text = text.replace(old, new)
         text = text.replace(hide, "/* remember-me always on; checkbox hidden */")
         path.write_text(text, encoding="utf-8")
-    print(f"patched always-remember on {len(list(dist.glob('*.html')))} files")
+    print(f"patched always-remember on {len(paths)} files")
 
 
 def main() -> None:
@@ -77,14 +93,14 @@ def main() -> None:
     # staticrypt encrypts each HTML file into a password prompt page.
     DIST.mkdir(parents=True, exist_ok=True)
 
-    html_files = sorted(SITE.glob("*.html"))
-    # Encrypt everything except we want a single entry: encrypt all content pages;
-    # use staticrypt on all and set index as encrypted landing.
+    html_files = sorted(SITE.rglob("*.html"))
+    # Use paths relative to SITE so staticrypt preserves actors/ structure under DIST
+    rel_files = [str(p.relative_to(SITE)) for p in html_files]
     cmd = [
         "npx",
         "--yes",
         "staticrypt@3",
-        *[str(p) for p in html_files],
+        *rel_files,
         "-d",
         str(DIST),
         "-p",
@@ -107,12 +123,24 @@ def main() -> None:
         "Incorrect password.",
     ]
     print("running staticrypt on", len(html_files), "files...")
-    r = subprocess.run(cmd, cwd=str(ROOT), shell=True)
+    r = subprocess.run(cmd, cwd=str(SITE), shell=True)
     if r.returncode != 0:
         raise SystemExit(r.returncode)
 
     # Always persist unlock — do not require the "Remember me" checkbox.
     patch_always_remember(DIST)
+
+    # staticrypt flattens paths; restore actors/ so relative links work
+    restore_actors_dir(DIST)
+
+    # Copy static assets (portraits, headshots) beside encrypted HTML
+    src_assets = SITE / "assets"
+    if src_assets.exists():
+        dst_assets = DIST / "assets"
+        if dst_assets.exists():
+            shutil.rmtree(dst_assets)
+        shutil.copytree(src_assets, dst_assets)
+        print(f"copied assets -> {dst_assets}")
 
     # Copy a note
     (DIST / "README.md").write_text(

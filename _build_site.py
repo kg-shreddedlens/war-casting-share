@@ -659,12 +659,25 @@ a{color:var(--ink)}a:hover{color:var(--accent)}
 .pkg-face-role{font-family:"DM Sans",sans-serif;font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--muted);line-height:1.2}
 .pkg-face-name{font-family:"DM Sans",sans-serif;font-size:11.5px;font-weight:600;color:var(--ink);line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .pkg-why{margin:0 0 12px;color:var(--muted);font-size:14.5px;line-height:1.5;font-weight:500}
-.pkg-gbu{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:12px 0}
+.pkg-gbu{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:12px 0}
 @media(max-width:900px){.pkg-gbu{grid-template-columns:1fr}}
+.pkg-gbu .gbu-tile{border:1px solid var(--ink);border-radius:var(--radius);padding:12px 14px 14px;background:#fff;min-width:0}
+.pkg-gbu .gbu-good{background:linear-gradient(0deg,rgba(26,107,60,.06),rgba(26,107,60,.06)),#fff;border-color:#1a6b3c}
+.pkg-gbu .gbu-bad{background:linear-gradient(0deg,rgba(138,90,0,.07),rgba(138,90,0,.07)),#fff;border-color:#8a5a00}
+.pkg-gbu .gbu-ugly{background:linear-gradient(0deg,rgba(176,0,32,.06),rgba(176,0,32,.06)),#fff;border-color:var(--accent)}
+.pkg-gbu .gbu-tile h5{margin:0 0 8px}
 .pkg-gbu .gbu-good h5{color:#1a6b3c}
 .pkg-gbu .gbu-bad h5{color:#8a5a00}
 .pkg-gbu .gbu-ugly h5{color:var(--accent)}
+.pkg-gbu .gbu-tile ul{margin:0;padding-left:1.05rem;color:var(--muted);line-height:1.4;font-weight:500;font-size:13.5px}
+.pkg-gbu .gbu-tile li{margin:0 0 6px}
+.pkg-gbu .gbu-tile li:last-child{margin-bottom:0}
 .pkg-caveats{margin-top:4px;padding-top:12px;border-top:1px solid var(--soft)}
+.pkg-caveats h4{margin:0 0 10px}
+.pkg-caveat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media(max-width:700px){.pkg-caveat-grid{grid-template-columns:1fr}}
+.pkg-caveat-tile{border:1px solid var(--ink);border-radius:var(--radius);padding:12px 14px;background:#fafaf8;color:var(--muted);font-size:13.5px;line-height:1.45;font-weight:500;min-width:0}
+.pkg-caveat-tile strong{display:block;font-family:"DM Sans",sans-serif;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink);margin:0 0 6px}
 .ens-stack{display:grid;gap:28px;margin-top:40px}
 .ens-block{border-top:1px solid var(--soft);padding-top:22px}
 .ens-block p{margin:0;color:var(--muted);font-size:15px;line-height:1.55;font-weight:500;max-width:70ch}
@@ -1888,6 +1901,20 @@ def _ul(items: list[str]) -> str:
     return "<ul>" + "".join(f"<li>{escape(x)}</li>" for x in items) + "</ul>"
 
 
+def _caveat_tiles(items: list[str]) -> str:
+    if not items:
+        return '<p class="pkg-why">—</p>'
+    tiles = []
+    for i, text in enumerate(items, 1):
+        tiles.append(
+            f'<div class="pkg-caveat-tile">'
+            f"<strong>Caveat {i}</strong>"
+            f"{escape(text)}"
+            f"</div>"
+        )
+    return f'<div class="pkg-caveat-grid">{"".join(tiles)}</div>'
+
+
 def _package_face_tiles(p: dict, registry: dict) -> str:
     norman = re.sub(r"\*+$", "", p["norman"]).strip()
     roles = [
@@ -1933,13 +1960,13 @@ def render_package_card(p: dict, registry: dict) -> str:
       <h4>Why this package</h4>
       <p class="pkg-why">{escape(why)}</p>
       <div class="pkg-gbu">
-        <div class="gbu-good"><h5>The good</h5>{_ul(brief.get("good") or [])}</div>
-        <div class="gbu-bad"><h5>The bad</h5>{_ul(brief.get("bad") or [])}</div>
-        <div class="gbu-ugly"><h5>The ugly</h5>{_ul(brief.get("ugly") or [])}</div>
+        <div class="gbu-tile gbu-good"><h5>The good</h5>{_ul(brief.get("good") or [])}</div>
+        <div class="gbu-tile gbu-bad"><h5>The bad</h5>{_ul(brief.get("bad") or [])}</div>
+        <div class="gbu-tile gbu-ugly"><h5>The ugly</h5>{_ul(brief.get("ugly") or [])}</div>
       </div>
       <div class="pkg-caveats">
         <h4>Caveats</h4>
-        {_ul(brief.get("caveats") or [])}
+        {_caveat_tiles(brief.get("caveats") or [])}
       </div>
     </div>"""
     return f"""<article class="{cls}" data-reveal>

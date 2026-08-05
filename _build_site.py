@@ -258,20 +258,28 @@ a{color:var(--ink)}a:hover{color:var(--accent)}
 .fit-list li{margin:0 0 10px;padding-left:4px}
 .fit-list li::marker{font-weight:700;color:var(--ink)}
 .table-wrap{overflow:auto;border-bottom:3px solid var(--ink);margin-bottom:8px}
-.cast-table{width:100%;border-collapse:collapse;min-width:960px}
-.cast-table th,.cast-table td{padding:0 14px;text-align:left;vertical-align:middle}
-.cast-table th{font-family:"DM Sans",sans-serif;font-size:11px;letter-spacing:.1em;text-transform:uppercase;border-bottom:2px solid var(--ink);font-weight:700;padding-top:12px;padding-bottom:12px}
-.cast-table td{border-bottom:1px solid var(--soft);font-size:14px;font-weight:500;height:96px;padding-top:8px;padding-bottom:8px}
-.cast-table tbody tr{cursor:pointer;transition:background .2s ease}
-.cast-table tbody tr:hover{background:#efefed}
-.actor-cell{display:flex;gap:14px;align-items:center;min-height:80px}
-.actor-cell .text{min-width:0}
-.actor-cell .name{font-weight:700;margin:0 0 4px;font-size:15px}
-.actor-cell .bio{color:var(--muted);font-size:12.5px;line-height:1.35;max-width:36ch;margin:0;font-weight:500}
+.slist-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin-top:8px}
+.slist-tile{display:flex;flex-direction:column;gap:14px;border:1px solid var(--ink);border-radius:var(--radius);background:#fff;padding:16px 16px 18px;text-decoration:none;color:inherit;min-height:100%;transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease;cursor:pointer}
+.slist-tile:hover{transform:translateY(-3px);border-color:var(--accent);color:inherit;box-shadow:0 12px 28px rgba(0,0,0,.08)}
+.slist-tile:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.slist-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.slist-rank{font-family:"DM Sans",sans-serif;font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--muted)}
+.slist-head{display:flex;gap:14px;align-items:center}
+.slist-head .text{min-width:0}
+.slist-name{font-family:"Bebas Neue",sans-serif;font-size:1.65rem;letter-spacing:.03em;margin:0;line-height:.95}
+.slist-bio{color:var(--muted);font-size:13.5px;line-height:1.4;margin:6px 0 0;font-weight:500;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.slist-metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:auto;padding-top:12px;border-top:1px solid var(--soft)}
+.slist-metric{min-width:0}
+.slist-metric .lbl{display:block;font-family:"DM Sans",sans-serif;font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--muted);margin-bottom:4px}
+.slist-metric .val{font-weight:700;font-size:15px;line-height:1.3}
+.slist-metric .val.fit-n{font-family:"Bebas Neue",sans-serif;font-size:2.2rem;font-weight:400;letter-spacing:.02em;line-height:1;color:var(--ink)}
+.slist-metric.span-2{grid-column:1 / -1}
+.slist-notes{margin:0;color:var(--muted);font-size:14px;line-height:1.45;font-weight:500}
+.slist-tile .icon-row{margin-top:2px}
 .fee-cell{line-height:1.35}
 .fee-cell .fee-band{display:block;font-weight:700}
 .fee-cell .fee-dollars{display:block;font-size:12px;color:var(--muted);font-weight:500;margin-top:2px}
-.tier{display:inline-block;padding:3px 9px;font-size:11px;letter-spacing:.08em;border:1px solid var(--ink);font-family:"DM Sans",sans-serif;font-weight:700}
+.tier{display:inline-block;padding:3px 9px;font-size:11px;letter-spacing:.08em;border:1px solid var(--ink);font-family:"DM Sans",sans-serif;font-weight:700;border-radius:6px}
 .tier-a{background:var(--accent);color:#fff;border-color:var(--accent)}
 .num{font-variant-numeric:tabular-nums;font-family:"DM Sans",sans-serif;font-size:12px;font-weight:600}
 .icon-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
@@ -392,13 +400,13 @@ const io = new IntersectionObserver((entries) => {
   entries.forEach((e) => { if (e.isIntersecting) e.target.classList.add('in'); });
 }, { threshold: 0.12 });
 document.querySelectorAll('[data-reveal]').forEach((el) => io.observe(el));
-document.querySelectorAll('tr[data-href]').forEach((tr) => {
-  tr.addEventListener('click', (e) => {
+document.querySelectorAll('[data-href]').forEach((el) => {
+  el.addEventListener('click', (e) => {
     if (e.target.closest('a')) return;
-    location.href = tr.getAttribute('data-href');
+    location.href = el.getAttribute('data-href');
   });
-  tr.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); location.href = tr.getAttribute('data-href'); }
+  el.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); location.href = el.getAttribute('data-href'); }
   });
 });
 """
@@ -992,27 +1000,10 @@ def render_shortlist_section(role: dict, title: str, code: str, rows: list[dict]
         return (-fit_n, orig)
 
     rows = sorted(rows, key=fit_key)
-    head = f"""
-<section class="shortlist" data-reveal>
-  <header class="section-head">
-    <p class="eyebrow">Shortlist · Tier {escape(code)}</p>
-    <h2>{escape(title)}</h2>
-    <p class="lede">Ordered by Fit descending. Click any row for the actor-in-role shred page.</p>
-  </header>
-  <div class="table-wrap">
-    <table class="cast-table">
-      <thead>
-        <tr>
-          <th>#</th><th>Actor</th><th>Tier</th><th>Fit</th><th>Fee</th><th>Flags</th><th>Notes</th>
-        </tr>
-      </thead>
-      <tbody>
-"""
-    body_rows = []
+    tiles = []
     for i, row in enumerate(rows, 1):
         name = re.sub(r"\*+", "", row.get("Actor", "")).strip()
         if not name or name.startswith("CD Match"):
-            # still show but no detail page for placeholders
             href = ""
         else:
             href = actor_slug_path(role["slug"], name)
@@ -1020,29 +1011,64 @@ def render_shortlist_section(role: dict, title: str, code: str, rows: list[dict]
         fee = row.get("Fee band", "")
         flags = row.get("Flags", "").replace(",", " ·")
         notes = row.get("Notes", "")
-        n = i
         bio = shorten_bio((registry.get(name) or {}).get("bio") or "")
         hs = headshot_src(name, registry)
         avatar = avatar_html(hs, "sm", name)
         icons = icon_links(name, registry, enrich)
-        name_block = f"""<div class="actor-cell">{avatar}<div class="text">
-  <div class="name">{escape(name)}</div>
-  <p class="bio">{escape(bio)}</p>
-  {icons}
-</div></div>"""
-        tr_attrs = f' data-href="{escape(href)}" tabindex="0" role="link"' if href else ""
-        body_rows.append(
-            f"""<tr{tr_attrs} data-reveal>
-  <td class="num">{str(n).zfill(2)}</td>
-  <td>{name_block}</td>
-  <td><span class="tier tier-{code.lower()}">{escape(code)}</span></td>
-  <td class="num">{escape(fit)}</td>
-  <td>{fee_cell_html(fee)}</td>
-  <td>{escape(flags)}</td>
-  <td>{escape(notes)}</td>
-</tr>"""
+        clickable = f' data-href="{escape(href)}" tabindex="0" role="link"' if href else ""
+        notes_html = (
+            f'<div class="slist-metric span-2"><span class="lbl">Notes</span>'
+            f'<p class="slist-notes">{escape(notes)}</p></div>'
+            if notes
+            else ""
         )
-    return head + "\n".join(body_rows) + "</tbody></table></div></section>"
+        flags_html = (
+            f'<div class="slist-metric span-2"><span class="lbl">Flags</span>'
+            f'<div class="val">{escape(flags)}</div></div>'
+            if flags
+            else ""
+        )
+        tiles.append(
+            f"""<article class="slist-tile"{clickable} data-reveal>
+  <div class="slist-top">
+    <span class="slist-rank">{str(i).zfill(2)}</span>
+    <span class="tier tier-{code.lower()}">{escape(code)}</span>
+  </div>
+  <div class="slist-head">
+    {avatar}
+    <div class="text">
+      <h3 class="slist-name">{escape(name)}</h3>
+      <p class="slist-bio">{escape(bio)}</p>
+    </div>
+  </div>
+  <div class="slist-metrics">
+    <div class="slist-metric">
+      <span class="lbl">Fit</span>
+      <div class="val fit-n">{escape(fit) or "—"}</div>
+    </div>
+    <div class="slist-metric">
+      <span class="lbl">Fee</span>
+      <div class="val">{fee_cell_html(fee)}</div>
+    </div>
+    {flags_html}
+    {notes_html}
+  </div>
+  {icons}
+</article>"""
+        )
+
+    return f"""
+<section class="shortlist" data-reveal>
+  <header class="section-head">
+    <p class="eyebrow">Shortlist · Tier {escape(code)}</p>
+    <h2>{escape(title)}</h2>
+    <p class="lede">Ordered by Fit descending. Click any tile for the actor-in-role shred page.</p>
+  </header>
+  <div class="slist-grid">
+    {"".join(tiles)}
+  </div>
+</section>
+"""
 
 
 def render_character(meta: dict, registry: dict, enrich: dict) -> tuple[str, list[tuple[str, dict, dict]]]:

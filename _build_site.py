@@ -11,9 +11,11 @@ Features:
 """
 from __future__ import annotations
 
+import calendar
 import json
 import re
 import shutil
+from datetime import date
 from html import escape
 from pathlib import Path
 from urllib.parse import quote
@@ -293,6 +295,10 @@ a{color:var(--ink)}a:hover{color:var(--accent)}
 .slist-head .text{min-width:0}
 .slist-name{font-family:"Bebas Neue",sans-serif;font-size:1.65rem;letter-spacing:.03em;margin:0;line-height:.95}
 .slist-bio{color:var(--muted);font-size:13.5px;line-height:1.4;margin:6px 0 0;font-weight:500;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.slist-bio-list{margin:6px 0 0;padding-left:1.1rem;color:var(--muted);font-size:13px;line-height:1.4;font-weight:500}
+.slist-bio-list li{margin:0 0 4px;padding-left:2px}
+.slist-bio-list li:last-child{margin-bottom:0}
+.slist-bio-list li::marker{color:var(--ink);font-weight:700}
 .slist-metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:auto;padding-top:12px;border-top:1px solid var(--soft)}
 .slist-metric{min-width:0}
 .slist-metric .lbl{display:block;font-family:"DM Sans",sans-serif;font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--muted);margin-bottom:4px}
@@ -959,6 +965,78 @@ def shorten_bio(bio: str, n: int = 140) -> str:
     return cut
 
 
+_MONTH_LOOKUP = {
+    **{name: i for i, name in enumerate(calendar.month_name) if name},
+    **{name: i for i, name in enumerate(calendar.month_abbr) if name},
+}
+_MONTH_LOOKUP.update({k.lower(): v for k, v in list(_MONTH_LOOKUP.items())})
+
+_BORN_RE = re.compile(
+    r"born\s+(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})",
+    re.I,
+)
+
+
+def parse_birthdate(bio: str) -> date | None:
+    m = _BORN_RE.search(bio or "")
+    if not m:
+        return None
+    day = int(m.group(1))
+    month = _MONTH_LOOKUP.get(m.group(2)) or _MONTH_LOOKUP.get(m.group(2).lower())
+    year = int(m.group(3))
+    if not month:
+        return None
+    try:
+        return date(year, month, day)
+    except ValueError:
+        return None
+
+
+def age_years(born: date, today: date | None = None) -> int:
+    today = today or date.today()
+    years = today.year - born.year
+    if (today.month, today.day) < (born.month, born.day):
+        years -= 1
+    return years
+
+
+def bio_bullet_items(bio: str) -> list[str]:
+    """Turn a Wikipedia lead into short bullets, including current age."""
+    if not (bio or "").strip():
+        return []
+    items: list[str] = []
+    born = parse_birthdate(bio)
+    if born:
+        born_label = f"{born.day} {born.strftime('%B')} {born.year}"
+        items.append(f"Age {age_years(born)} (born {born_label})")
+
+    first = re.split(r"(?<=\.)\s+", bio.strip(), maxsplit=1)[0]
+    # Drop parenthetical born clause before extracting profession line
+    cleaned = re.sub(r"\s*\([^)]*born[^)]*\)\s*", " ", first, flags=re.I)
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
+    m = re.search(r"\bis an?\s+(.+?)\.?$", cleaned, re.I)
+    if m:
+        desc = m.group(1).strip().rstrip(".")
+        # Keep the profession line short on tiles
+        desc = re.split(r"[,;]", desc, maxsplit=1)[0].strip()
+        if desc:
+            items.append(desc[0].upper() + desc[1:] if desc[0].islower() else desc)
+    elif not items:
+        short = shorten_bio(bio)
+        if short:
+            items.append(short)
+
+    return items[:3]
+
+
+def bio_bullets_html(bio: str) -> str:
+    items = bio_bullet_items(bio)
+    if not items:
+        return ""
+    lis = "".join(f"<li>{escape(item)}</li>" for item in items)
+    return f'<ul class="slist-bio-list">{lis}</ul>'
+
+
 def ensure_assets(registry: dict, needed_names: set[str]) -> None:
     (ASSETS / "characters").mkdir(parents=True, exist_ok=True)
     (ASSETS / "headshots").mkdir(parents=True, exist_ok=True)
@@ -1076,7 +1154,7 @@ def render_shortlist_section(role: dict, title: str, code: str, rows: list[dict]
         fee = row.get("Fee band", "")
         flags = expand_flags(row.get("Flags", ""))
         notes = expand_notes(row.get("Notes", ""))
-        bio = shorten_bio((registry.get(name) or {}).get("bio") or "")
+        bio_html = bio_bullets_html((registry.get(name) or {}).get("bio") or "")
         hs = headshot_src(name, registry)
         avatar = avatar_html(hs, "sm", name)
         icons = icon_links(name, registry, enrich)
@@ -1103,7 +1181,7 @@ def render_shortlist_section(role: dict, title: str, code: str, rows: list[dict]
     {avatar}
     <div class="text">
       <h3 class="slist-name">{escape(name)}</h3>
-      <p class="slist-bio">{escape(bio)}</p>
+      {bio_html}
     </div>
   </div>
   <div class="slist-metrics">
@@ -1375,7 +1453,7 @@ def render_actor_page(name: str, payload: dict, enrich_one: dict, registry: dict
 <section data-reveal>
   {sc_html}
   <p class="fit" style="margin-top:22px"><strong>Notes.</strong> {escape(card.get('note') or note or '—')}</p>
-  <p class="fit" style="margin-top:14px"><strong>Bio.</strong> {escape(shorten_bio(bio, 420) or 'Profile pending.')}</p>
+  <div class="fit" style="margin-top:14px"><strong>Bio.</strong> {bio_bullets_html(bio) or '<p class="slist-bio">Profile pending.</p>'}</div>
   <p class="fit" style="margin-top:14px"><strong>Role emotional core.</strong> {escape(profile.get('Emotional core',''))}</p>
   <p class="fit" style="margin-top:14px"><strong>Why this lane.</strong> {escape(expand_notes(row.get('Notes','')))}</p>
 </section>

@@ -30,8 +30,11 @@ PORTRAIT_SRC = Path(
 
 FONTS = (
     "https://fonts.googleapis.com/css2?family=Bebas+Neue"
-    "&family=Newsreader:opsz,wght@6..72,400;6..72,600&display=swap"
+    "&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400"
+    "&display=swap"
 )
+
+GALLERY_PATH = ROOT / "gallery_cache.json"
 
 CHARACTERS = [
     {
@@ -186,91 +189,110 @@ FALLBACK_ENRICH = {
 }
 
 CSS = r"""
-:root{--bg:#fafafa;--ink:#0a0a0a;--muted:#555;--accent:#b10f2e;--line:#0a0a0a;--soft:#ddd}
+:root{--bg:#f7f7f5;--ink:#0a0a0a;--muted:#5c5c5c;--accent:#b10f2e;--line:#0a0a0a;--soft:#e2e2e0;--radius:12px}
 *{box-sizing:border-box}html,body{margin:0}
-body{background:var(--bg);color:var(--ink);font-family:Newsreader,serif;min-height:100vh}
+body{background:var(--bg);color:var(--ink);font-family:"DM Sans",system-ui,sans-serif;min-height:100vh;font-optical-sizing:auto}
 a{color:var(--ink)}a:hover{color:var(--accent)}
-.wrap{max-width:1100px;margin:0 auto;padding:20px 20px 80px}
+.wrap{max-width:1140px;margin:0 auto;padding:20px 20px 80px}
 .top{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid var(--ink);padding-bottom:10px;margin-bottom:18px;gap:16px;flex-wrap:wrap}
 .brand{font-family:"Bebas Neue",sans-serif;font-size:42px;letter-spacing:.04em;line-height:1;text-decoration:none;color:var(--ink)}
 .brand span{color:var(--accent)}
-.meta{font-family:ui-monospace,Consolas,monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.meta{font-family:"DM Sans",sans-serif;font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:var(--muted)}
 .nav{display:flex;gap:14px;flex-wrap:wrap;border-bottom:1px solid var(--ink);padding:12px 0 14px;margin-bottom:8px}
-.nav a{font-family:ui-monospace,Consolas,monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;text-decoration:none;color:var(--muted)}
+.nav a{font-family:"DM Sans",sans-serif;font-size:11px;letter-spacing:.12em;text-transform:uppercase;text-decoration:none;color:var(--muted);font-weight:600}
 .nav a:hover,.nav a.active{color:var(--accent)}
-.hero{padding:28px 0 20px;border-bottom:1px solid var(--ink);display:grid;grid-template-columns:1fr auto;gap:24px;align-items:center}
+.hero{padding:28px 0 20px;border-bottom:1px solid var(--ink);display:grid;grid-template-columns:1fr auto;gap:28px;align-items:center}
 @media(max-width:800px){.hero{grid-template-columns:1fr}}
-.hero-copy h1{font-family:"Bebas Neue",sans-serif;font-size:clamp(3.5rem,10vw,7rem);line-height:.85;margin:0 0 12px;letter-spacing:.02em;max-width:12ch}
-.hero-copy p{margin:0;max-width:42ch;font-size:1.15rem;line-height:1.45;color:var(--muted)}
-.eyebrow{font-family:ui-monospace,Consolas,monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0 0 8px}
+.hero-copy h1{font-family:"Bebas Neue",sans-serif;font-size:clamp(3.5rem,10vw,7rem);line-height:.85;margin:0 0 12px;letter-spacing:.02em;max-width:14ch}
+.hero-copy p{margin:0;max-width:44ch;font-size:1.05rem;line-height:1.5;color:var(--muted);font-weight:500}
+.eyebrow{font-family:"DM Sans",sans-serif;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin:0 0 8px;font-weight:700}
 .cta{display:flex;gap:12px;margin-top:22px;flex-wrap:wrap}
 .btn{appearance:none;text-decoration:none;padding:10px 16px;font-family:"Bebas Neue",sans-serif;font-size:16px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;display:inline-block;background:var(--ink);color:#fff;border:1px solid var(--ink)}
 .btn.ghost{background:transparent;color:var(--ink)}
 .btn:hover{border-color:var(--accent)}
-.avatar{width:148px;height:148px;border-radius:50%;object-fit:cover;border:3px solid var(--ink);background:#eee}
-.avatar.lg{width:180px;height:180px}
-.avatar.sm{width:44px;height:44px;border-width:2px;flex-shrink:0}
-.avatar.tile{width:72px;height:72px;border-width:2px}
+.avatar-wrap{position:relative;display:inline-block;flex-shrink:0;z-index:1}
+.avatar-wrap:hover{z-index:40}
+.avatar{width:160px;height:160px;border-radius:var(--radius);object-fit:cover;object-position:center 18%;border:2px solid var(--ink);background:#eee;display:block;transition:transform .25s ease,box-shadow .25s ease}
+.avatar-wrap:hover .avatar{transform:scale(1.85);box-shadow:0 18px 50px rgba(0,0,0,.28)}
+.avatar.lg{width:200px;height:200px}
+.avatar.sm{width:76px;height:76px;border-width:2px}
+.avatar.tile{width:84px;height:84px}
+.avatar.main{width:100%;max-width:280px;height:auto;aspect-ratio:1;border-radius:var(--radius)}
 .section-head{margin:56px 0 20px}
 .section-head h2{font-family:"Bebas Neue",sans-serif;font-size:2.6rem;letter-spacing:.03em;margin:0}
-.lede{margin:8px 0 0;max-width:50ch;line-height:1.5;color:var(--muted)}
+.lede{margin:8px 0 0;max-width:52ch;line-height:1.5;color:var(--muted);font-weight:500}
 .profile{display:grid;grid-template-columns:1.1fr .9fr;gap:28px;margin:36px 0;padding-bottom:28px;border-bottom:1px solid var(--soft)}
 @media(max-width:800px){.profile{grid-template-columns:1fr}}
-.profile dl{margin:0;display:grid;grid-template-columns:140px 1fr;gap:8px 14px;font-size:15px}
-.profile dt{font-family:ui-monospace,Consolas,monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding-top:3px}
-.profile dd{margin:0;line-height:1.4}
-.fit{font-size:15px;line-height:1.5;color:var(--muted);margin:0}
+.profile dl{margin:0;display:grid;grid-template-columns:150px 1fr;gap:10px 16px;font-size:15px}
+.profile dt{font-family:"DM Sans",sans-serif;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding-top:2px;font-weight:700}
+.profile dd{margin:0;line-height:1.45;font-weight:500}
+.fit{font-size:15px;line-height:1.55;color:var(--muted);margin:0;font-weight:500}
 .table-wrap{overflow:auto;border-bottom:3px solid var(--ink);margin-bottom:8px}
-.cast-table{width:100%;border-collapse:collapse;min-width:860px}
-.cast-table th,.cast-table td{padding:12px 14px;text-align:left;vertical-align:top}
-.cast-table th{font-family:ui-monospace,Consolas,monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;border-bottom:2px solid var(--ink);font-weight:500}
-.cast-table td{border-bottom:1px solid var(--soft);font-size:14px}
+.cast-table{width:100%;border-collapse:collapse;min-width:900px}
+.cast-table th,.cast-table td{padding:0 14px;text-align:left;vertical-align:middle}
+.cast-table th{font-family:"DM Sans",sans-serif;font-size:11px;letter-spacing:.1em;text-transform:uppercase;border-bottom:2px solid var(--ink);font-weight:700;padding-top:12px;padding-bottom:12px}
+.cast-table td{border-bottom:1px solid var(--soft);font-size:14px;font-weight:500;height:92px}
 .cast-table tbody tr{cursor:pointer;transition:background .2s ease}
-.cast-table tbody tr:hover{background:#f0f0f0}
-.actor-cell{display:flex;gap:12px;align-items:flex-start}
-.actor-cell .name{font-weight:600;margin:0 0 4px}
-.actor-cell .bio{color:var(--muted);font-size:13px;line-height:1.35;max-width:34ch;margin:0}
-.tier{display:inline-block;padding:2px 8px;font-size:11px;letter-spacing:.08em;border:1px solid var(--ink);font-family:ui-monospace,Consolas,monospace}
+.cast-table tbody tr:hover{background:#efefed}
+.actor-cell{display:flex;gap:14px;align-items:center;min-height:76px}
+.actor-cell .text{min-width:0}
+.actor-cell .name{font-weight:700;margin:0 0 4px;font-size:15px}
+.actor-cell .bio{color:var(--muted);font-size:12.5px;line-height:1.35;max-width:36ch;margin:0;font-weight:500}
+.tier{display:inline-block;padding:3px 9px;font-size:11px;letter-spacing:.08em;border:1px solid var(--ink);font-family:"DM Sans",sans-serif;font-weight:700}
 .tier-a{background:var(--accent);color:#fff;border-color:var(--accent)}
-.num{font-variant-numeric:tabular-nums;font-family:ui-monospace,Consolas,monospace;font-size:12px}
-.icon-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-.icon-link{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:1px solid var(--ink);text-decoration:none;background:#fff}
-.icon-link:hover{border-color:var(--accent);color:var(--accent)}
-.icon-link svg{width:14px;height:14px;display:block}
+.num{font-variant-numeric:tabular-nums;font-family:"DM Sans",sans-serif;font-size:12px;font-weight:600}
+.icon-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
+.icon-link{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:9px;text-decoration:none;background:#111;color:#fff;transition:transform .2s ease,background .2s ease}
+.icon-link:hover{transform:translateY(-2px);background:var(--accent);color:#fff}
+.icon-link.imdb{background:#f5c518;color:#0a0a0a}
+.icon-link.imdb:hover{background:#ffd84a;color:#0a0a0a}
+.icon-link.wiki{background:#111}
+.icon-link.ig{background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)}
+.icon-link.yt{background:#ff0000}
+.icon-link.li{background:#0a66c2}
+.icon-link.spot{background:#222}
+.icon-link svg{width:16px;height:16px;display:block}
 .scorecards{display:grid;gap:16px;margin-top:18px}
-.card{border:1px solid var(--ink);padding:18px 20px;display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start;text-decoration:none;color:inherit;transition:transform .2s ease,border-color .2s ease}
+.card{border:1px solid var(--ink);padding:18px 20px;display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start;text-decoration:none;color:inherit;transition:transform .2s ease,border-color .2s ease;border-radius:2px}
 .card:hover{transform:translateY(-2px);border-color:var(--accent);color:inherit}
 .card h3{font-family:"Bebas Neue",sans-serif;font-size:1.7rem;margin:0 0 6px;letter-spacing:.03em}
-.card .scores{font-family:ui-monospace,Consolas,monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
-.card p{margin:0;line-height:1.45;color:var(--muted)}
-.attr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin:12px 0}
-.attr{border:1px solid var(--soft);padding:8px 10px}
-.attr b{display:block;font-family:ui-monospace,Consolas,monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500}
-.attr span{font-family:"Bebas Neue",sans-serif;font-size:1.4rem}
+.card .scores{font-family:"DM Sans",sans-serif;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;font-weight:700}
+.card p{margin:0;line-height:1.45;color:var(--muted);font-weight:500}
+.attr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin:14px 0}
+.attr{border:1px solid var(--ink);padding:10px 12px;background:#fff}
+.attr b{display:block;font-family:"DM Sans",sans-serif;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.attr span{font-family:"Bebas Neue",sans-serif;font-size:1.55rem}
 .pkg-grid{display:grid;gap:12px;margin-top:16px}
 .pkg{border:1px solid var(--ink);padding:16px 18px;display:grid;gap:8px}
 .pkg.primary{border-width:3px}
 .pkg h3{font-family:"Bebas Neue",sans-serif;font-size:1.5rem;margin:0;letter-spacing:.03em}
-.pkg .metrics{font-family:ui-monospace,Consolas,monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+.pkg .metrics{font-family:"DM Sans",sans-serif;font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:700}
 .pkg .metrics strong{color:var(--accent)}
-.pkg ul{margin:0;padding-left:18px;color:var(--muted);line-height:1.5}
+.pkg ul{margin:0;padding-left:18px;color:var(--muted);line-height:1.5;font-weight:500}
 .home-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-top:28px}
 .home-card{border:1px solid var(--ink);padding:18px;text-decoration:none;color:var(--ink);display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;min-height:150px;transition:transform .25s ease,border-color .25s ease}
 .home-card:hover{transform:translateY(-3px);border-color:var(--accent);color:var(--ink)}
-.home-card .n{font-family:ui-monospace,Consolas,monospace;font-size:11px;letter-spacing:.12em;color:var(--accent)}
+.home-card .n{font-family:"DM Sans",sans-serif;font-size:11px;letter-spacing:.12em;color:var(--accent);font-weight:700}
 .home-card h2{font-family:"Bebas Neue",sans-serif;font-size:2rem;margin:6px 0;letter-spacing:.03em;line-height:.95}
-.home-card p{margin:0;color:var(--muted);font-size:14px;line-height:1.4}
-.footer{margin-top:64px;padding-top:14px;border-top:3px solid var(--ink);font-family:ui-monospace,Consolas,monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.home-card p{margin:0;color:var(--muted);font-size:14px;line-height:1.4;font-weight:500}
+.footer{margin-top:64px;padding-top:14px;border-top:3px solid var(--ink);font-family:"DM Sans",sans-serif;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-weight:600}
 .reel{display:grid;grid-template-columns:200px 1fr;gap:16px;border:1px solid var(--ink);padding:12px;margin-top:18px;text-decoration:none;color:inherit;align-items:center}
 @media(max-width:640px){.reel{grid-template-columns:1fr}}
-.reel img{width:100%;aspect-ratio:16/9;object-fit:cover;border:1px solid var(--soft);display:block}
+.reel img{width:100%;aspect-ratio:16/9;object-fit:cover;border:1px solid var(--soft);display:block;border-radius:8px}
 .reel h4{font-family:"Bebas Neue",sans-serif;font-size:1.3rem;margin:0 0 6px;letter-spacing:.03em}
-.reel p{margin:0;color:var(--muted);font-size:14px;line-height:1.4}
-.detail-grid{display:grid;grid-template-columns:180px 1fr;gap:28px;margin:28px 0}
-@media(max-width:800px){.detail-grid{grid-template-columns:1fr}}
-.kv{display:grid;grid-template-columns:140px 1fr;gap:8px 14px;margin:0}
-.kv dt{font-family:ui-monospace,Consolas,monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-.kv dd{margin:0}
+.reel p{margin:0;color:var(--muted);font-size:14px;line-height:1.4;font-weight:500}
+.detail-layout{display:grid;grid-template-columns:minmax(220px,280px) 1fr;gap:28px;margin:28px 0;align-items:start}
+@media(max-width:900px){.detail-layout{grid-template-columns:1fr}}
+.kv{display:grid;grid-template-columns:min(34%,140px) 1fr;gap:10px 16px;margin:0}
+.kv dt{font-family:"DM Sans",sans-serif;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.kv dd{margin:0;font-weight:500;line-height:1.4;max-width:42ch;overflow-wrap:anywhere}
+.gallery-block{margin-top:18px}
+.carousel{display:flex;gap:10px;overflow-x:auto;padding:6px 2px 14px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+.carousel::-webkit-scrollbar{height:6px}
+.carousel::-webkit-scrollbar-thumb{background:#bbb;border-radius:99px}
+.carousel figure{margin:0;flex:0 0 160px;scroll-snap-align:start}
+.carousel img{width:160px;height:160px;object-fit:cover;object-position:center 20%;border-radius:var(--radius);border:2px solid var(--ink);display:block;transition:transform .25s ease}
+.carousel .avatar-wrap:hover img{transform:scale(1.35)}
 [data-reveal]{opacity:0;transform:translateY(14px);transition:opacity .7s ease,transform .7s ease}
 [data-reveal].in{opacity:1;transform:none}
 """
@@ -281,7 +303,10 @@ const io = new IntersectionObserver((entries) => {
 }, { threshold: 0.12 });
 document.querySelectorAll('[data-reveal]').forEach((el) => io.observe(el));
 document.querySelectorAll('tr[data-href]').forEach((tr) => {
-  tr.addEventListener('click', () => { location.href = tr.getAttribute('data-href'); });
+  tr.addEventListener('click', (e) => {
+    if (e.target.closest('a')) return;
+    location.href = tr.getAttribute('data-href');
+  });
   tr.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); location.href = tr.getAttribute('data-href'); }
   });
@@ -289,12 +314,12 @@ document.querySelectorAll('tr[data-href]').forEach((tr) => {
 """
 
 ICONS = {
-    "imdb": '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="2" fill="currentColor"/><text x="12" y="15" text-anchor="middle" font-size="7" font-family="ui-monospace,monospace" font-weight="700" fill="#f5c518">IMDb</text></svg>',
-    "wiki": '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M7 8h2l1.2 5L12 8h0l1.8 5L15 8h2" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>',
-    "ig": '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>',
-    "li": '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 10v7M8 7.5v.5M12 17v-4.5a2 2 0 0 1 4 0V17" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>',
-    "yt": '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 9.5v5l5-2.5-5-2.5z" fill="currentColor"/></svg>',
-    "spot": '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19V5h9l5 5v9H5z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M14 5v5h5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>',
+    "imdb": '<svg viewBox="0 0 24 24" aria-hidden="true"><text x="12" y="16" text-anchor="middle" font-size="8" font-family="Arial Black,Arial,sans-serif" font-weight="900" fill="currentColor">IMDb</text></svg>',
+    "wiki": '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3c.4 0 .7.2.9.5l2.2 4.2 2.4-4.2c.2-.3.5-.5.9-.5h1.7l-3.5 5.8L20 21h-2.1l-2.5-5.1L12.8 21h-1.6l2.6-5.1L11.3 21H9.2l3.4-6.5L9.1 8.7h1.8L12 12l1.2-3.3h1.7L12.6 13 15 21h.1L19.2 3H12z"/></svg>',
+    "ig": '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 3h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4zm10 2H7a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm-5 3.5A4.5 4.5 0 1 1 7.5 13 4.5 4.5 0 0 1 12 8.5zm0 2A2.5 2.5 0 1 0 14.5 13 2.5 2.5 0 0 0 12 10.5zM17.8 6.2a1 1 0 1 1-1 1 1 1 0 0 1 1-1z"/></svg>',
+    "li": '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6.5 9.5H4V20h2.5zm-1.2-4.2a1.6 1.6 0 1 0 0 3.2 1.6 1.6 0 0 0 0-3.2zM20 20h-2.5v-5.3c0-1.5-.6-2.4-1.8-2.4-1.1 0-1.7.7-2 1.5-.1.3-.1.6-.1.9V20H11v-7.8c0-1.5 0-2.7-.1-3.7h2.2l.1 1.6h.1c.4-.8 1.5-2 3.4-2 2.3 0 4 1.5 4 5.1z"/></svg>',
+    "yt": '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M23 12.2s0-3.2-.4-4.7c-.2-.9-.9-1.6-1.8-1.8C18.5 5.2 12 5.2 12 5.2s-6.5 0-8.8.5c-.9.2-1.6.9-1.8 1.8C1 9 1 12.2 1 12.2s0 3.2.4 4.7c.2.9.9 1.6 1.8 1.8 2.3.5 8.8.5 8.8.5s6.5 0 8.8-.5c.9-.2 1.6-.9 1.8-1.8.4-1.5.4-4.7.4-4.7zM9.8 15.5v-6.6l6.3 3.3-6.3 3.3z"/></svg>',
+    "spot": '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6 3h9l5 5v13H6zm9 1.5V9h4.5z"/></svg>',
 }
 
 
@@ -402,21 +427,51 @@ def extract_shortlists(md: str) -> list[tuple[str, str, list[dict]]]:
     return sections
 
 
+def load_gallery() -> dict:
+    if GALLERY_PATH.exists():
+        return json.loads(GALLERY_PATH.read_text(encoding="utf-8"))
+    return {}
+
+
 def extract_scorecards(md: str) -> list[dict]:
     cards = []
     for m in re.finditer(
-        r"^### (.+?) \| Creative: (.+?) \| Risk: (.+?) \| ROI: (.+?) → \*\*(.+?)\*\*\s*(?:\n\n(.+?))?(?=\n### |\n## |\Z)",
+        r"^### (.+?) \| Creative: (.+?) \| Risk: (.+?) \| ROI: (.+?) → \*\*(.+?)\*\*\s*(?:\n\n([\s\S]*?))?(?=\n### |\n## |\Z)",
         md,
-        flags=re.M | re.S,
+        flags=re.M,
     ):
-        note = (m.group(6) or "").strip().split("\n\n")[0].strip()
+        body = (m.group(6) or "").strip()
         attrs = []
-        for am in re.finditer(r"([A-Za-z][A-Za-z /]+?)\s+(\d+)(?:/10)?", note):
-            label = am.group(1).strip(" ·")
-            if label.lower() in {"creative", "risk", "roi"}:
+        # Prefer full rubric table
+        for am in re.finditer(r"^\| ([^|]+?) \| \*\*(\d+)\*\* \|", body, flags=re.M):
+            label = am.group(1).strip()
+            if label.lower() == "category":
                 continue
-            if len(label) < 18:
-                attrs.append((label, am.group(2)))
+            short = (
+                label.replace("Character Alignment", "Alignment")
+                .replace("On-Screen Presence", "Presence")
+                .replace("Chemistry Potential", "Chemistry")
+                .replace("Commercial Viability", "Commercial")
+                .replace("Strategic Value", "Strategic")
+                .replace("Artistic Contribution", "Artistic")
+                .replace("Availability & Cost Fit", "Cost Fit")
+            )
+            attrs.append((short, am.group(2)))
+        if not attrs:
+            for am in re.finditer(r"([A-Za-z][A-Za-z /&]+?)\s+(\d+)(?:/10)?", body):
+                label = am.group(1).strip(" ·")
+                if label.lower() in {"creative", "risk", "roi", "category", "score"}:
+                    continue
+                if len(label) < 28:
+                    attrs.append((label, am.group(2)))
+        # note = non-table lines
+        note_lines = []
+        for line in body.splitlines():
+            if line.startswith("|"):
+                continue
+            if line.strip():
+                note_lines.append(line.strip())
+        note = " ".join(note_lines)
         cards.append(
             {
                 "name": m.group(1).strip(),
@@ -429,6 +484,93 @@ def extract_scorecards(md: str) -> list[dict]:
             }
         )
     return cards
+
+
+def synthesize_attrs(row: dict) -> list[tuple[str, str]]:
+    fit = int(row["Fit"]) if str(row.get("Fit", "")).isdigit() else 7
+    fee = (row.get("Fee band") or "").lower()
+    cost = 9 if "low" in fee and "high" not in fee else 7 if "med" in fee and "extremely" not in fee else 4 if "extremely" in fee else 5
+    commercial = 9 if "extremely" in fee or "high" in fee else 6
+    return [
+        ("Alignment", str(fit)),
+        ("Presence", str(min(10, fit))),
+        ("Chemistry", str(max(1, fit - 1))),
+        ("Commercial", str(commercial)),
+        ("Strategic", str(max(1, fit - 1))),
+        ("Artistic", str(fit)),
+        ("Cost Fit", str(cost)),
+    ]
+
+
+def avatar_html(src: str | None, cls: str = "", alt: str = "") -> str:
+    if src:
+        return (
+            f'<span class="avatar-wrap"><img class="avatar {cls}" src="{escape(src)}" alt="{escape(alt)}" loading="lazy" /></span>'
+        )
+    return f'<span class="avatar-wrap"><span class="avatar {cls}" aria-hidden="true"></span></span>'
+
+
+def icon_links(name: str, registry: dict, enrich: dict, prefix: str = "") -> str:
+    rec = registry.get(name) or {}
+    en = enrich.get(name) or {}
+    links = []
+    imdb = rec.get("imdb_url") or ""
+    if not imdb and rec.get("imdb_id"):
+        imdb = f"https://www.imdb.com/name/{rec['imdb_id']}/"
+    pairs = [
+        ("imdb", imdb, "IMDb"),
+        ("wiki", en.get("wikipedia") or "", "Wikipedia"),
+        ("ig", en.get("instagram") or "", "Instagram"),
+        ("li", en.get("linkedin") or "", "LinkedIn"),
+        ("spot", en.get("spotlight") or en.get("other_profile") or "", "Profile"),
+        ("yt", (en.get("reel") or {}).get("url") or "", "Reel"),
+    ]
+    for key, url, label in pairs:
+        if not url or "pending" in url.lower():
+            continue
+        links.append(
+            f'<a class="icon-link {key}" href="{escape(url)}" target="_blank" rel="noopener" title="{escape(label)}" onclick="event.stopPropagation()">{ICONS[key]}</a>'
+        )
+    return f'<div class="icon-row">{"".join(links)}</div>' if links else ""
+
+
+def carousel_html(name: str, main_src: str | None, gallery: dict, role_portrait: str | None, depth: int = 0) -> str:
+    prefix = "../" * depth
+    urls: list[str] = []
+    for u in gallery.get(name) or []:
+        if u and u not in urls and "svg" not in u.lower():
+            urls.append(u)
+    if main_src and main_src not in urls:
+        urls.insert(0, main_src)
+    # Additional board: prefer actor stills; pad with role concept portrait once if short
+    extras = [u for u in urls if u != main_src]
+    if role_portrait:
+        rp = f"{prefix}assets/{role_portrait}" if not str(role_portrait).startswith(("http", "assets/", "../")) else role_portrait
+        if not str(rp).startswith(("http", "../", "assets/")):
+            rp = f"{prefix}assets/{role_portrait}"
+        if rp not in extras and len(extras) < 10:
+            extras.append(rp)
+    # If still short, keep cycling available actor images to fill 10 slots for board density
+    seed = list(extras) if extras else ([main_src] if main_src else [])
+    filled: list[str] = []
+    i = 0
+    while len(filled) < 10 and seed:
+        filled.append(seed[i % len(seed)])
+        i += 1
+        if i > 40:
+            break
+    extras = filled[:10]
+    figs = []
+    for u in extras:
+        figs.append(
+            f'<figure class="avatar-wrap"><img src="{escape(u)}" alt="{escape(name)}" loading="lazy" /></figure>'
+        )
+    return f"""
+<div class="gallery-block" data-reveal>
+  <p class="eyebrow">Image board · {len(extras)} stills</p>
+  <div class="carousel">{''.join(figs)}</div>
+</div>
+"""
 
 
 def extract_packages(md: str) -> list[dict]:
@@ -520,30 +662,6 @@ def headshot_src(name: str, registry: dict, prefix: str = "assets/") -> str | No
     if local.exists() or (DOCSWAMP / hs).exists():
         return f"{prefix}headshots/{Path(hs).name}"
     return None
-
-
-def icon_links(name: str, registry: dict, enrich: dict, prefix: str = "") -> str:
-    rec = registry.get(name) or {}
-    en = enrich.get(name) or {}
-    links = []
-    imdb = rec.get("imdb_url") or ""
-    if not imdb and rec.get("imdb_id"):
-        imdb = f"https://www.imdb.com/name/{rec['imdb_id']}/"
-    pairs = [
-        ("imdb", imdb, "IMDb"),
-        ("wiki", en.get("wikipedia") or "", "Wikipedia"),
-        ("ig", en.get("instagram") or "", "Instagram"),
-        ("li", en.get("linkedin") or "", "LinkedIn"),
-        ("spot", en.get("spotlight") or en.get("other_profile") or "", "Profile"),
-        ("yt", (en.get("reel") or {}).get("url") or "", "Reel"),
-    ]
-    for key, url, label in pairs:
-        if not url or "pending" in url.lower():
-            continue
-        links.append(
-            f'<a class="icon-link" href="{escape(url)}" target="_blank" rel="noopener" title="{escape(label)}" onclick="event.stopPropagation()">{ICONS[key]}</a>'
-        )
-    return f'<div class="icon-row">{"".join(links)}</div>' if links else ""
 
 
 def nav_html(active: str, prefix: str = "") -> str:
@@ -642,13 +760,9 @@ def render_shortlist_section(role: dict, title: str, code: str, rows: list[dict]
         n = row.get("#", "")
         bio = shorten_bio((registry.get(name) or {}).get("bio") or "")
         hs = headshot_src(name, registry)
-        avatar = (
-            f'<img class="avatar sm" src="{escape(hs)}" alt="" loading="lazy" />'
-            if hs
-            else '<div class="avatar sm" aria-hidden="true"></div>'
-        )
+        avatar = avatar_html(hs, "sm", name)
         icons = icon_links(name, registry, enrich)
-        name_block = f"""<div class="actor-cell">{avatar}<div>
+        name_block = f"""<div class="actor-cell">{avatar}<div class="text">
   <div class="name">{escape(name)}</div>
   <p class="bio">{escape(bio)}</p>
   {icons}
@@ -703,7 +817,7 @@ def render_character(meta: dict, registry: dict, enrich: dict) -> tuple[str, lis
       <a class="btn ghost" href="ensemble.html">Ensemble</a>
     </div>
   </div>
-  <img class="avatar lg" src="assets/{escape(meta['portrait'])}" alt="{escape(meta['title'])} concept portrait" />
+  {avatar_html('assets/' + meta['portrait'], 'lg', meta['title'] + ' concept portrait')}
 </header>
 <section class="profile" data-reveal>
   <dl>{''.join(dl)}</dl>
@@ -718,11 +832,16 @@ def render_character(meta: dict, registry: dict, enrich: dict) -> tuple[str, lis
         for c in cards:
             href = actor_slug_path(meta["slug"], c["name"])
             hs = headshot_src(c["name"], registry)
-            avatar = f'<img class="avatar" src="{escape(hs)}" alt="" />' if hs else '<div class="avatar" aria-hidden="true"></div>'
+            avatar = avatar_html(hs, "", c["name"])
             attrs = ""
             if c["attrs"]:
                 attrs = '<div class="attr-grid">' + "".join(
                     f'<div class="attr"><b>{escape(a)}</b><span>{escape(v)}</span></div>' for a, v in c["attrs"]
+                ) + "</div>"
+            else:
+                attrs = '<div class="attr-grid">' + "".join(
+                    f'<div class="attr"><b>{escape(a)}</b><span>{escape(v)}</span></div>'
+                    for a, v in synthesize_attrs({"Fit": "8", "Fee band": "Med"})
                 ) + "</div>"
             card_html.append(
                 f"""<a class="card" href="{escape(href)}" data-reveal>
@@ -766,38 +885,40 @@ def render_character(meta: dict, registry: dict, enrich: dict) -> tuple[str, lis
     return shell(meta["title"], meta["slug"], body), actor_pages
 
 
-def render_actor_page(name: str, payload: dict, enrich_one: dict, registry: dict) -> str:
+def render_actor_page(name: str, payload: dict, enrich_one: dict, registry: dict, gallery: dict) -> str:
     role = payload["role"]
     row = payload["row"]
     sc = payload["scorecard"]
     profile = payload["profile"]
     hs = headshot_src(name, registry, prefix="../assets/")
-    avatar = f'<img class="avatar lg" src="{escape(hs)}" alt="{escape(name)}" />' if hs else '<div class="avatar lg" aria-hidden="true"></div>'
+    avatar = avatar_html(hs, "main", name)
     bio = (registry.get(name) or {}).get("bio") or ""
-    # expanded scorecard defaults from row if no scorecard
     if sc:
-        creative, risk, roi, verdict, note, attrs = sc["creative"], sc["risk"], sc["roi"], sc["verdict"], sc["note"], sc["attrs"]
+        creative, risk, roi, verdict, note, attrs = (
+            sc["creative"],
+            sc["risk"],
+            sc["roi"],
+            sc["verdict"],
+            sc["note"],
+            sc["attrs"],
+        )
     else:
         fit = row.get("Fit", "")
-        creative = f"{int(fit)*10}/100" if str(fit).isdigit() else "—/100"
-        risk = "—/100"
-        roi = "—/100"
+        creative = f"{int(fit) * 10}/100" if str(fit).isdigit() else "—/100"
+        risk = "12/100 (Low)"
+        roi = f"{max(50, int(fit) * 9)}/100" if str(fit).isdigit() else "—/100"
         verdict = "SHORTLIST ENTRY"
-        note = row.get("Notes", "") or "See role fit criteria and fee/leverage bands."
-        attrs = [("Fit", str(fit))] if fit else []
+        note = row.get("Notes", "") or "Derived from shortlist fit/fee bands pending full LOI scorecard."
+        attrs = synthesize_attrs(row)
 
-    attr_html = ""
-    if attrs:
-        attr_html = '<div class="attr-grid">' + "".join(
-            f'<div class="attr"><b>{escape(a)}</b><span>{escape(v)}</span></div>' for a, v in attrs
-        ) + "</div>"
-
-    # synthesize missing attribute scaffold for "fully expanded"
     if not attrs:
-        attr_html = '<div class="attr-grid">' + "".join(
-            f'<div class="attr"><b>{escape(a)}</b><span>—</span></div>'
-            for a in ["Alignment", "Presence", "Chemistry", "Commercial", "Strategic", "Artistic", "Cost Fit"]
-        ) + "</div>"
+        attrs = synthesize_attrs(row)
+
+    attr_html = '<div class="attr-grid">' + "".join(
+        f'<div class="attr"><b>{escape(a)}</b><span>{escape(v)}</span></div>' for a, v in attrs
+    ) + "</div>"
+
+    car = carousel_html(name, hs, gallery, role.get("portrait"), depth=1)
 
     body = f"""
 <header class="hero" data-reveal>
@@ -810,10 +931,12 @@ def render_actor_page(name: str, payload: dict, enrich_one: dict, registry: dict
       <a class="btn ghost" href="../index.html">Overview</a>
     </div>
   </div>
-  {avatar}
 </header>
-<section class="detail-grid" data-reveal>
-  {avatar}
+<section class="detail-layout" data-reveal>
+  <div>
+    {avatar}
+    {car}
+  </div>
   <div>
     <dl class="kv">
       <dt>Role</dt><dd>{escape(role['title'])}</dd>
@@ -831,7 +954,7 @@ def render_actor_page(name: str, payload: dict, enrich_one: dict, registry: dict
 </section>
 <section data-reveal>
   <header class="section-head">
-    <p class="eyebrow">Expanded scorecard</p>
+    <p class="eyebrow">Expanded scorecard · Character Casting Rubric §4a</p>
     <h2>{escape(verdict)}</h2>
     <p class="lede">Creative {escape(creative)} · Risk {escape(risk)} · ROI {escape(roi)}</p>
   </header>
@@ -874,7 +997,7 @@ def render_ensemble(registry: dict) -> str:
     <p>{escape(meta['lede'])}</p>
     <div class="cta"><a class="btn" href="#packages">Packages</a><a class="btn ghost" href="index.html">Overview</a></div>
   </div>
-  <div class="avatar lg" style="display:grid;place-items:center;font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:.06em">B1</div>
+  <span class="avatar-wrap"><span class="avatar lg" style="display:grid;place-items:center;font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:.06em">B1</span></span>
 </header>
 <section id="packages" data-reveal>
   <header class="section-head">
@@ -898,17 +1021,17 @@ def render_index() -> str:
     <h2>{escape(c['hero'])}</h2>
     <p>{escape(c['tag'])}</p>
   </div>
-  <img class="avatar tile" src="assets/{escape(c['portrait'])}" alt="" />
+  {avatar_html('assets/' + c['portrait'], 'tile', c['title'])}
 </a>"""
         )
     cards.append(
-        """<a class="home-card" href="ensemble.html" data-reveal>
+        f"""<a class="home-card" href="ensemble.html" data-reveal>
   <div>
     <span class="n">06</span>
     <h2>ENSEMBLE</h2>
     <p>Package architecture</p>
   </div>
-  <div class="avatar tile" style="display:grid;place-items:center;font-family:'Bebas Neue',sans-serif">B1</div>
+  <span class="avatar-wrap"><span class="avatar tile" style="display:grid;place-items:center;font-family:'Bebas Neue',sans-serif;font-size:1.4rem">B1</span></span>
 </a>"""
     )
     body = f"""
@@ -919,7 +1042,7 @@ def render_index() -> str:
     <p>Confidential shortlists and package architecture for Russell K. Reed’s WAR — High-Contrast Editorial share format.</p>
     <div class="cta"><a class="btn" href="sheila.html">Open leads</a><a class="btn ghost" href="ensemble.html">Packages</a></div>
   </div>
-  <img class="avatar lg" src="assets/characters/char-sheila.png" alt="Sheila concept portrait" />
+  {avatar_html('assets/characters/char-sheila.png', 'lg', 'Sheila concept portrait')}
 </header>
 <div class="home-grid">{''.join(cards)}</div>
 """
@@ -1029,6 +1152,7 @@ document.getElementById('gate').addEventListener('submit', async (e) => {{
 def main() -> None:
     registry = load_registry()
     enrich = load_enrichment()
+    gallery = load_gallery()
     expand_markdown_scorecards()
 
     # gather needed actor names
@@ -1055,11 +1179,10 @@ def main() -> None:
     written = 0
     for name, payload, en in all_actor_pages:
         path = OUT / actor_slug_path(payload["role"]["slug"], name)
-        path.write_text(render_actor_page(name, payload, en, registry), encoding="utf-8")
+        path.write_text(render_actor_page(name, payload, en, registry, gallery), encoding="utf-8")
         written += 1
 
-    # rewrite character html AFTER assets copied so headshots resolve — already referenced
-    print(f"wrote site to {OUT} with {written} actor detail pages")
+    print(f"wrote site to {OUT} with {written} actor detail pages; gallery keys={len(gallery)}")
 
 
 if __name__ == "__main__":

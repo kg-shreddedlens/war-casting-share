@@ -92,6 +92,12 @@ def main() -> None:
     # Auth helper: protect content pages; gate stays as entry after encrypt of whole set
     # staticrypt encrypts each HTML file into a password prompt page.
     DIST.mkdir(parents=True, exist_ok=True)
+    # Clean previous dist HTML so leftover encrypted pages don't break patching
+    for old in DIST.rglob("*.html"):
+        old.unlink()
+    actors_old = DIST / "actors"
+    if actors_old.exists():
+        shutil.rmtree(actors_old)
 
     html_files = sorted(SITE.rglob("*.html"))
     # Use paths relative to SITE so staticrypt preserves actors/ structure under DIST

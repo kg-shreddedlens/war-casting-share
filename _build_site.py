@@ -635,17 +635,29 @@ a{color:var(--ink)}a:hover{color:var(--accent)}
 }
 .pkg-grid{display:grid;gap:18px;margin-top:16px}
 .pkg{border:1px solid var(--ink);padding:20px 22px;display:grid;gap:14px;background:#fff;border-radius:var(--radius)}
-.pkg.primary{border-width:3px}
+.pkg.primary{border-color:#1a6b3c;background:linear-gradient(0deg,rgba(26,107,60,.07),rgba(26,107,60,.07)),#fff;box-shadow:inset 4px 0 0 #1a6b3c}
+.pkg.primary .pkg-verdict{color:#1a6b3c}
 .pkg-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:10px 18px}
 .pkg h3{font-family:"Bebas Neue",sans-serif;font-size:1.85rem;margin:0;letter-spacing:.03em}
 .pkg-verdict{margin:0;font-family:"DM Sans",sans-serif;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--accent)}
 .pkg .metrics{font-family:"DM Sans",sans-serif;font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;width:100%}
 .pkg .metrics strong{color:var(--accent)}
-.pkg-body{display:grid;grid-template-columns:minmax(180px,.85fr) minmax(240px,1.4fr);gap:22px 28px;align-items:start}
-@media(max-width:800px){.pkg-body{grid-template-columns:1fr}}
-.pkg-cast h4,.pkg-analysis h4,.pkg-gbu h5,.ens-block h3{font-family:"DM Sans",sans-serif;font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;margin:0 0 8px;color:var(--ink)}
+.pkg-body{display:grid;grid-template-columns:minmax(150px,.7fr) minmax(220px,1.05fr) minmax(240px,1.35fr);gap:18px 22px;align-items:start}
+@media(max-width:980px){.pkg-body{grid-template-columns:minmax(150px,.75fr) 1fr}.pkg-analysis{grid-column:1/-1}}
+@media(max-width:720px){.pkg-body{grid-template-columns:1fr}.pkg-analysis{grid-column:auto}}
+.pkg-cast h4,.pkg-faces h4,.pkg-analysis h4,.pkg-gbu h5,.ens-block h3{font-family:"DM Sans",sans-serif;font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;margin:0 0 8px;color:var(--ink)}
 .pkg-cast ul,.pkg-analysis ul,.ens-block ul{margin:0;padding-left:1.15rem;color:var(--muted);line-height:1.45;font-weight:500;font-size:14px}
 .pkg-cast li,.pkg-analysis li,.ens-block li{margin:0 0 6px}
+.pkg-faces{min-width:0}
+.pkg-face-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+@media(max-width:1100px){.pkg-face-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:720px){.pkg-face-grid{grid-template-columns:repeat(5,minmax(0,1fr))}}
+.pkg-face{display:flex;flex-direction:column;gap:5px;text-decoration:none;color:inherit;min-width:0;transition:transform .18s ease}
+.pkg-face:hover{transform:translateY(-2px);color:inherit}
+.pkg-face img,.pkg-face .pkg-face-ph{width:100%;aspect-ratio:1;object-fit:cover;object-position:center 18%;border-radius:8px;border:1.5px solid var(--ink);background:#eee;display:block}
+.pkg-face .pkg-face-ph{display:grid;place-items:center;font-family:"Bebas Neue",sans-serif;font-size:1.1rem;color:var(--muted)}
+.pkg-face-role{font-family:"DM Sans",sans-serif;font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--muted);line-height:1.2}
+.pkg-face-name{font-family:"DM Sans",sans-serif;font-size:11.5px;font-weight:600;color:var(--ink);line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .pkg-why{margin:0 0 12px;color:var(--muted);font-size:14.5px;line-height:1.5;font-weight:500}
 .pkg-gbu{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:12px 0}
 @media(max-width:900px){.pkg-gbu{grid-template-columns:1fr}}
@@ -1876,12 +1888,46 @@ def _ul(items: list[str]) -> str:
     return "<ul>" + "".join(f"<li>{escape(x)}</li>" for x in items) + "</ul>"
 
 
-def render_package_card(p: dict) -> str:
+def _package_face_tiles(p: dict, registry: dict) -> str:
+    norman = re.sub(r"\*+$", "", p["norman"]).strip()
+    roles = [
+        ("Sheila", "sheila", p["sheila"]),
+        ("James", "james", p["james"]),
+        ("Samantha", "samantha", p["samantha"]),
+        ("Melina", "melina", p["melina"]),
+        ("Norman", "norman", norman),
+    ]
+    tiles: list[str] = []
+    for role_label, role_slug, actor in roles:
+        href = actor_slug_path(role_slug, actor)
+        src = headshot_src(actor, registry)
+        if src:
+            face = f'<img src="{escape(src)}" alt="{escape(actor)}" loading="lazy" />'
+        else:
+            initials = "".join(w[0] for w in actor.split()[:2] if w).upper() or "?"
+            face = f'<span class="pkg-face-ph" aria-hidden="true">{escape(initials)}</span>'
+        tiles.append(
+            f'<a class="pkg-face" href="{escape(href)}">'
+            f"{face}"
+            f'<span class="pkg-face-role">{escape(role_label)}</span>'
+            f'<span class="pkg-face-name">{escape(actor)}</span>'
+            f"</a>"
+        )
+    return (
+        '<div class="pkg-faces">'
+        "<h4>Faces</h4>"
+        f'<div class="pkg-face-grid">{"".join(tiles)}</div>'
+        "</div>"
+    )
+
+
+def render_package_card(p: dict, registry: dict) -> str:
     brief = _brief_for_package(p["name"])
     cls = "pkg primary" if p["primary"] else "pkg"
     verdict = brief.get("verdict") or ("Primary package" if p["primary"] else "Scenario package")
     why = brief.get("why") or "Briefing pending — see Ensemble shred."
     norman = re.sub(r"\*+$", "", p["norman"]).strip()
+    faces = _package_face_tiles(p, registry)
     analysis = f"""
     <div class="pkg-analysis">
       <h4>Why this package</h4>
@@ -1913,6 +1959,7 @@ def render_package_card(p: dict) -> str:
         <li>Norman — {escape(norman)}</li>
       </ul>
     </div>
+    {faces}
     {analysis}
   </div>
 </article>"""
@@ -1934,7 +1981,7 @@ def render_ensemble(registry: dict) -> str:
                 f'<h2 style="font-size:1.8rem">{escape(last_scenario)}</h2>'
                 f"</header>"
             )
-        pkg_html.append(render_package_card(p))
+        pkg_html.append(render_package_card(p, registry))
 
     body = f"""
 <header class="hero" data-reveal>
@@ -1954,7 +2001,7 @@ def render_ensemble(registry: dict) -> str:
   <header class="section-head">
     <p class="eyebrow">Scenario grid</p>
     <h2>Recommended packages</h2>
-    <p class="lede">Primary Balanced package B1 is marked with a heavier rule. Each card carries the why, the caveats, and the good / bad / ugly.</p>
+    <p class="lede">Primary Balanced package B1 is marked with a green highlight. Each card carries the faces, the why, the caveats, and the good / bad / ugly.</p>
   </header>
   <div class="pkg-grid">{''.join(pkg_html)}</div>
 </section>

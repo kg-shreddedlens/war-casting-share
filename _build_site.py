@@ -1388,28 +1388,53 @@ def ensure_assets(registry: dict, needed_names: set[str]) -> None:
         dst = ASSETS / "characters" / name
         if src.exists():
             shutil.copy2(src, dst)
+    media_hs = DOCSWAMP / "media" / "cast-headshots"
     for name in needed_names:
         rec = registry.get(name) or {}
         hs = rec.get("headshot") or ""
-        if not hs or hs.startswith("http"):
-            continue
-        src = DOCSWAMP / hs
-        if not src.exists():
-            continue
-        dest_name = Path(hs).name
-        shutil.copy2(src, ASSETS / "headshots" / dest_name)
+        candidates: list[Path] = []
+        if hs and not hs.startswith("http"):
+            candidates.append(DOCSWAMP / hs)
+            candidates.append(ASSETS / "headshots" / Path(hs).name)
+        slug = slugify(name)
+        for ext in (".jpg", ".jpeg", ".png", ".webp"):
+            candidates.append(media_hs / f"{slug}{ext}")
+            candidates.append(ASSETS / "headshots" / f"{slug}{ext}")
+        for src in candidates:
+            if src.exists() and src.stat().st_size > 2000:
+                dest = ASSETS / "headshots" / src.name
+                if src.resolve() != dest.resolve():
+                    try:
+                        shutil.copy2(src, dest)
+                    except Exception:
+                        pass
+                break
 
 
 def headshot_src(name: str, registry: dict, prefix: str = "assets/") -> str | None:
+    """Resolve a headshot path. Fall back to on-disk assets/galleries when registry is empty."""
     rec = registry.get(name) or {}
     hs = rec.get("headshot") or ""
-    if not hs:
-        return None
     if hs.startswith("http"):
         return hs
-    local = ASSETS / "headshots" / Path(hs).name
-    if local.exists() or (DOCSWAMP / hs).exists():
-        return f"{prefix}headshots/{Path(hs).name}"
+    if hs:
+        local = ASSETS / "headshots" / Path(hs).name
+        if local.exists() or (DOCSWAMP / hs).exists():
+            return f"{prefix}headshots/{Path(hs).name}"
+    slug = slugify(name)
+    for ext in (".jpg", ".jpeg", ".png", ".webp"):
+        local = ASSETS / "headshots" / f"{slug}{ext}"
+        if local.exists() and local.stat().st_size > 2000:
+            return f"{prefix}headshots/{local.name}"
+        media = DOCSWAMP / "media" / "cast-headshots" / f"{slug}{ext}"
+        if media.exists() and media.stat().st_size > 2000:
+            return f"{prefix}headshots/{media.name}"
+    # Last resort: first gallery still
+    gal = ASSETS / "galleries" / slug
+    if gal.exists():
+        for p in sorted(gal.glob("*")):
+            if p.suffix.lower() in {".jpg", ".jpeg", ".png", ".webp"} and p.stat().st_size > 2000:
+                return f"{prefix}galleries/{slug}/{p.name}"
     return None
 
 

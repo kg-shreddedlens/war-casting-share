@@ -266,15 +266,217 @@ def synthesize_section3(row: dict, s1: list[int]) -> tuple[list[int], list[int]]
     return cost, value
 
 
+def _is_prompt_echo(comment: str, prompt: str) -> bool:
+    c = re.sub(r"\s+", " ", (comment or "").strip().lower().rstrip("?"))
+    p = re.sub(r"\s+", " ", (prompt or "").strip().lower().rstrip("?"))
+    if not c:
+        return True
+    if c == p:
+        return True
+    # Shred tables often paste the rubric question into Comments
+    return c.startswith("does the actor") or c.startswith("charisma,") or c.startswith("fit with")
+
+
+def _flags(row: dict) -> str:
+    return (row.get("Flags") or "").lower()
+
+
+def _fee(row: dict) -> str:
+    return (row.get("Fee band") or "").lower()
+
+
+def _fit(row: dict) -> int | None:
+    return score_num(str(row.get("Fit", "")))
+
+
+def _notes(row: dict) -> str:
+    return re.sub(r"\s+", " ", (row.get("Notes") or "").strip())
+
+
+def justify_section1(
+    name: str,
+    score: int,
+    row: dict,
+    *,
+    prompt: str = "",
+    comment: str | None = None,
+) -> str:
+    """Answer: why this category scored N/10."""
+    if comment and not _is_prompt_echo(comment, prompt):
+        return comment.strip()
+
+    fit = _fit(row)
+    flags = _flags(row)
+    fee = _fee(row)
+    notes = _notes(row)
+    note_bit = f" Shortlist note: {notes}." if notes and len(notes) < 90 else ""
+
+    if name == "Character Alignment":
+        if score >= 9:
+            return (
+                f"Locks the role’s physical/emotional/tonal read"
+                f"{f' (shortlist Fit {fit}/10)' if fit else ''}; "
+                f"little daylight between actor and character brief.{note_bit}"
+            )
+        if score >= 7:
+            return (
+                f"Mostly on-brief for look and tone"
+                f"{f' (Fit {fit}/10)' if fit else ''}, with a small stretch on age, "
+                f"heritage, or emotional register that keeps it under a 9.{note_bit}"
+            )
+        if score >= 5:
+            return (
+                "Partial alignment — usable, but look, age, or tone would need "
+                f"intentional justifying in the room.{note_bit}"
+            )
+        return (
+            "Material mismatch to the locked brief; would require rewriting the "
+            f"character or accepting a visible stretch.{note_bit}"
+        )
+
+    if name == "On-Screen Presence":
+        if "presence" in flags and score >= 8:
+            return "Flagged for presence; holds the frame without forcing volume — camera authority is a casting reason here."
+        if score >= 9:
+            return "Commands attention in stillness and in spike moments; presence is a primary reason to pursue."
+        if score >= 7:
+            return "Credible screen magnetism for the role size; not a blank, but not a can’t-look-away 9/10 either."
+        if score >= 5:
+            return "Functional presence; may need direction/coverage to feel like a lead-adjacent force."
+        return "Presence reads thin for this lane — risk of disappearing next to stronger scene partners."
+
+    if name == "Chemistry Potential":
+        if score >= 9:
+            return "High confidence opposite the marriage/ensemble must-pairs; prior rapport or proven two-hander craft."
+        if score >= 7:
+            return "Likely chemistry with the prestige-pair / sister / workplace geometry; still wants a chemistry read before lock."
+        if score >= 5:
+            return "Chemistry is plausible but unproven for these specific pairings — do not package on vibes alone."
+        return "Hard to see the required relational voltage; pair risk is a real reason the score is low."
+
+    if name == "Commercial Viability":
+        if score >= 9:
+            return (
+                "Buyer/audience recognition is doing real work for sales and awareness"
+                f"{' at a ' + (row.get('Fee band') or 'premium') + ' fee band' if fee else ''}."
+            )
+        if score >= 7:
+            return "Solid commercial usefulness without needing tentpole heat; helps the conversation more than it closes it alone."
+        if score >= 5:
+            return "Limited marquee pull — package must sell concept/craft harder than the name."
+        return "Little measurable draw for this fee/role size; commercial case is weak."
+
+    if name == "Strategic Value":
+        if "press" in flags and score >= 7:
+            return "Press/PR leverage is part of the cast thesis — awards adjacency or financing optics justify the points."
+        if score >= 9:
+            return "Meaningful funding, awards, or packaging leverage beyond the performance itself."
+        if score >= 7:
+            return "Helpful strategic upside (credibility, PR, or soft financing) without being a deal-making hammer."
+        if score >= 5:
+            return "Strategic upside is secondary; attach for the role fit, not for desk fireworks."
+        return "Adds little packaging or financing leverage; treat as a pure performance hire."
+
+    if name == "Artistic Contribution":
+        if "artistic" in flags or "restraint" in flags:
+            return (
+                f"Flagged for {'artistic elevation' if 'artistic' in flags else 'restraint'}; "
+                f"expected to deepen the role through interpretation, not just hit marks. Score {score}/10 reflects that bet."
+            )
+        if score >= 9:
+            return "Likely to elevate the part — specificity, improvisation, or tonal daring beyond competent coverage."
+        if score >= 7:
+            return "Will deliver a sharp, authored take; elevation is probable but not the whole reason to cast."
+        if score >= 5:
+            return "Competent interpretive range; unlikely to redefine the role without strong direction."
+        return "Artistic upside looks limited for this material — risk of a flat or generic read."
+
+    if name == "Availability & Cost Fit":
+        if score >= 9:
+            return (
+                f"Fee/availability sit cleanly in lane"
+                f"{f' ({row.get('Fee band')})' if row.get('Fee band') else ''}; "
+                f"access risk is low for the role size."
+            )
+        if score >= 7:
+            return "Mostly affordable/accessible with manageable quote or schedule friction."
+        if score >= 5:
+            return "Cost or access friction is material — workable only with discipline on quote and dates."
+        return "Fee and/or access likely fight the budget model; score is low because the hire can break the lane."
+
+    return f"Scored {score}/10 against the rubric for this category."
+
+
+def justify_section2(name: str, score: int, row: dict) -> str:
+    """Risk index: lower is better — explain why this flag scored N/10."""
+    avail = (row.get("Avail risk") or "").lower()
+    flags = _flags(row)
+    fee = _fee(row)
+
+    if score <= 1:
+        return f"No material {name.lower()} signal on the current shortlist read — kept at floor risk."
+    if score == 2:
+        return f"Minor {name.lower()} watch only; not enough to block, but logged for diligence."
+    if name == "Scheduling Conflicts":
+        if "high" in avail:
+            return "Avail risk flagged High — schedule reliability is a real packaging concern."
+        if "med" in avail:
+            return "Medium availability risk — dates may need buffers or alternate holds."
+        return f"Some schedule friction implied; scored {score}/10 until calendars clear."
+    if name == "Public Image / PR Risk" or name == "Press Volatility":
+        if "press" in flags:
+            return "Press flag on the shortlist — PR screening required before soft-offer."
+        return f"Elevated press/image sensitivity for this profile; scored {score}/10 as a watch item."
+    if name == "Typecasting / Mismatch":
+        if "familiarity" in flags:
+            return "Familiarity helps sales but can typecast; score reflects tonal mismatch risk if the brand is too loud."
+        return f"Some incongruence with tone or prior roles; scored {score}/10 until materials prove the pivot."
+    if name == "Market Decline":
+        if "extremely" in fee or ("high" in fee and "med" not in fee.replace(" ", "")):
+            return "High fee against uncertain heat — market/value fatigue is the risk being priced."
+        return f"Mild relevance/fatigue concern; scored {score}/10."
+    if name == "Representation Issues":
+        return "Negotiation or access friction possible; not a hard no, but plan for slower paper."
+    return f"Elevated {name.lower()} reading at {score}/10 — mitigate before lock."
+
+
+def justify_section3_cost(name: str, score: int, row: dict) -> str:
+    """Cost dimensions: 10 = easy/cheap — explain the score."""
+    fee = row.get("Fee band") or "unbanded"
+    if score >= 9:
+        return f"Easy on this axis relative to {fee} — low pain for the production model."
+    if score >= 7:
+        return f"Mostly manageable under a {fee} posture; not free, not punishing."
+    if score >= 5:
+        return f"Material cost/friction on {name.lower()}; only works with quote discipline."
+    return f"Painful on {name.lower()} for this fee lane ({fee}) — a primary reason the cost score is low."
+
+
+def justify_section3_value(name: str, score: int, row: dict) -> str:
+    """Value dimensions: 10 = extremely valuable."""
+    flags = _flags(row)
+    if score >= 9:
+        return f"Strong {name.lower()} contribution — this is part of why the attach is worth chasing."
+    if score >= 7:
+        return f"Clear {name.lower()} upside without needing it to carry the whole package."
+    if score >= 5:
+        return f"Moderate {name.lower()}; helpful but not a financing hammer."
+    if "press" in flags and "Press" in name:
+        return "Press flag exists, but measurable buzz value still looks limited for this role size."
+    return f"Limited {name.lower()} add — do not oversell this dimension in the room."
+
+
 def build_full_scorecard(
     row: dict,
     attrs: list[tuple[str, str]] | None = None,
     note: str = "",
     existing: dict | None = None,
+    comments: dict[str, str] | None = None,
 ) -> dict:
     s1 = synthesize_section1(row, attrs)
     s2 = synthesize_section2(row)
     cost, value = synthesize_section3(row, s1)
+    comments = comments or {}
 
     creative = creative_total(s1)
     raw_risk = sum(s2)
@@ -312,6 +514,26 @@ def build_full_scorecard(
     est_value = int(mid * (1 + uplift_pct / 100))
     delta = est_value - mid
 
+    s1_why = [
+        justify_section1(
+            name,
+            score,
+            row,
+            prompt=prompt,
+            comment=comments.get(name) or comments.get(name.lower()),
+        )
+        for (name, _w, prompt), score in zip(SECTION1, s1)
+    ]
+    s2_why = [justify_section2(name, score, row) for (name, _p), score in zip(SECTION2, s2)]
+    cost_why = [
+        justify_section3_cost(name, score, row)
+        for (name, _w, _p), score in zip(SECTION3_COST, cost)
+    ]
+    value_why = [
+        justify_section3_value(name, score, row)
+        for (name, _w, _p), score in zip(SECTION3_VALUE, value)
+    ]
+
     return {
         "creative": creative,
         "risk_raw": raw_risk,
@@ -326,6 +548,10 @@ def build_full_scorecard(
         "section2": s2,
         "section3_cost": cost,
         "section3_value": value,
+        "section1_why": s1_why,
+        "section2_why": s2_why,
+        "section3_cost_why": cost_why,
+        "section3_value_why": value_why,
         "fee_mid": mid,
         "roi_delta_usd": delta,
         "roi_uplift_pct": uplift_pct,
@@ -342,14 +568,22 @@ def sc_row(
     *,
     meta: str = "",
     denom: str = "10",
+    why: str = "",
 ) -> str:
     meta_html = f'<p class="sc-meta">{escape(meta)}</p>' if meta else ""
+    why_html = (
+        f'<div class="sc-why"><span class="sc-why-label">Why this score</span>'
+        f'<p>{escape(why)}</p></div>'
+        if why
+        else '<div class="sc-why"></div>'
+    )
     return f"""<li class="sc-row">
   <div class="sc-row-copy">
     <h4 class="sc-cat">{escape(title)}</h4>
     <p class="sc-prompt">{escape(prompt)}</p>
     {meta_html}
   </div>
+  {why_html}
   <div class="sc-score" aria-label="Score {escape(str(score))} of {escape(denom)}">
     <span class="sc-score-n">{escape(str(score))}</span>
     <span class="sc-score-den">/{escape(denom)}</span>
@@ -357,9 +591,10 @@ def sc_row(
 </li>"""
 
 
-def section1_rows_html(scores: list[int]) -> str:
+def section1_rows_html(scores: list[int], whys: list[str] | None = None) -> str:
     rows = []
-    for (name, weight, prompt), score in zip(SECTION1, scores):
+    whys = whys or []
+    for i, ((name, weight, prompt), score) in enumerate(zip(SECTION1, scores)):
         wscore = weighted(score, weight)
         rows.append(
             sc_row(
@@ -367,22 +602,37 @@ def section1_rows_html(scores: list[int]) -> str:
                 prompt,
                 score,
                 meta=f"Weight {weight} · Weighted {wscore:g}",
+                why=whys[i] if i < len(whys) else "",
             )
         )
     return "\n".join(rows)
 
 
-def section2_rows_html(scores: list[int]) -> str:
+def section2_rows_html(scores: list[int], whys: list[str] | None = None) -> str:
     rows = []
-    for (name, prompt), score in zip(SECTION2, scores):
-        rows.append(sc_row(name, prompt, score))
+    whys = whys or []
+    for i, ((name, prompt), score) in enumerate(zip(SECTION2, scores)):
+        rows.append(sc_row(name, prompt, score, why=whys[i] if i < len(whys) else ""))
     return "\n".join(rows)
 
 
-def section3_rows_html(items: list[tuple[str, int, str]], scores: list[int]) -> str:
+def section3_rows_html(
+    items: list[tuple[str, int, str]],
+    scores: list[int],
+    whys: list[str] | None = None,
+) -> str:
     rows = []
-    for (name, weight, prompt), score in zip(items, scores):
-        rows.append(sc_row(name, prompt, score, meta=f"Weight {weight}"))
+    whys = whys or []
+    for i, ((name, weight, prompt), score) in enumerate(zip(items, scores)):
+        rows.append(
+            sc_row(
+                name,
+                prompt,
+                score,
+                meta=f"Weight {weight}",
+                why=whys[i] if i < len(whys) else "",
+            )
+        )
     return "\n".join(rows)
 
 
@@ -415,10 +665,10 @@ def sc_panel(
 
 
 def full_scorecard_html(card: dict) -> str:
-    s1 = section1_rows_html(card["section1"])
-    s2 = section2_rows_html(card["section2"])
-    c3 = section3_rows_html(SECTION3_COST, card["section3_cost"])
-    v3 = section3_rows_html(SECTION3_VALUE, card["section3_value"])
+    s1 = section1_rows_html(card["section1"], card.get("section1_why"))
+    s2 = section2_rows_html(card["section2"], card.get("section2_why"))
+    c3 = section3_rows_html(SECTION3_COST, card["section3_cost"], card.get("section3_cost_why"))
+    v3 = section3_rows_html(SECTION3_VALUE, card["section3_value"], card.get("section3_value_why"))
 
     p1 = sc_panel(
         "Section 1 · Creative + Commercial Fit",

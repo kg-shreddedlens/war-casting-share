@@ -25,6 +25,7 @@ from _scorecard import (
     SHORT_TO_FULL,
     build_full_scorecard,
     full_scorecard_html,
+    justify_section1,
     money,
     sc_panel,
     sc_row,
@@ -575,23 +576,27 @@ a{color:var(--ink)}a:hover{color:var(--accent)}
 .attr{border:1px solid var(--ink);padding:10px 12px;background:#fff}
 .attr b{display:block;font-family:"DM Sans",sans-serif;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
 .attr span{font-family:"Bebas Neue",sans-serif;font-size:1.55rem}
-.scorecard-full{margin-top:8px;max-width:720px}
+.scorecard-full{margin-top:8px;max-width:980px}
 .sc-panel{border:1px solid var(--ink);border-bottom:4px solid var(--ink);background:#fff;margin:28px 0 0;overflow:hidden}
 .sc-panel-head{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:end;padding:22px 22px 18px;border-bottom:2px solid var(--ink);background:#fafaf8}
 .sc-panel-titles{min-width:0}
 .sc-h{font-family:"Bebas Neue",sans-serif;font-size:clamp(1.85rem,4vw,2.35rem);letter-spacing:.03em;margin:0;line-height:.95}
-.sc-note{margin:10px 0 0;color:var(--muted);font-size:15px;font-weight:500;line-height:1.45;max-width:42ch}
+.sc-note{margin:10px 0 0;color:var(--muted);font-size:15px;font-weight:500;line-height:1.45;max-width:52ch}
 .sc-badge{text-align:right;line-height:1;font-variant-numeric:tabular-nums}
 .sc-badge-n{font-family:"Bebas Neue",sans-serif;font-size:clamp(2.8rem,6vw,3.6rem);letter-spacing:.02em;display:block}
 .sc-badge-den{font-family:"DM Sans",sans-serif;font-size:14px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .sc-rows{list-style:none;margin:0;padding:0}
-.sc-row{display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center;padding:18px 22px;border-bottom:1px solid var(--soft)}
+.sc-row{display:grid;grid-template-columns:minmax(160px,1.05fr) minmax(200px,1.45fr) auto;gap:18px 22px;align-items:start;padding:18px 22px;border-bottom:1px solid var(--soft)}
+@media(max-width:720px){.sc-row{grid-template-columns:1fr auto}.sc-why{grid-column:1 / -1;order:3}.sc-score{order:2}}
 .sc-row:last-child{border-bottom:0}
 .sc-row:hover{background:#f7f7f5}
 .sc-cat{font-family:"Bebas Neue",sans-serif;font-size:clamp(1.35rem,3vw,1.7rem);letter-spacing:.03em;margin:0;line-height:1}
-.sc-prompt{margin:8px 0 0;color:var(--muted);font-size:15.5px;line-height:1.45;font-weight:500;max-width:38ch}
+.sc-prompt{margin:8px 0 0;color:var(--muted);font-size:15px;line-height:1.45;font-weight:500;max-width:36ch}
 .sc-meta{margin:8px 0 0;font-family:"DM Sans",sans-serif;font-size:12px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;color:var(--muted)}
-.sc-score{text-align:right;line-height:1;font-variant-numeric:tabular-nums;min-width:4.5rem}
+.sc-why{min-width:0;padding-top:2px}
+.sc-why-label{display:block;font-family:"DM Sans",sans-serif;font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--muted);margin-bottom:6px}
+.sc-why p{margin:0;color:var(--ink);font-size:14.5px;line-height:1.45;font-weight:500}
+.sc-score{text-align:right;line-height:1;font-variant-numeric:tabular-nums;min-width:4.5rem;padding-top:2px}
 .sc-score-n{font-family:"Bebas Neue",sans-serif;font-size:clamp(2.4rem,5vw,3.1rem);letter-spacing:.02em}
 .sc-score-den{font-family:"DM Sans",sans-serif;font-size:13px;font-weight:700;color:var(--muted);letter-spacing:.04em;margin-left:2px}
 .sc-panel-foot{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;padding:16px 22px;background:#111;color:#fff;border-top:2px solid var(--ink)}
@@ -1520,6 +1525,13 @@ def render_character(meta: dict, registry: dict, enrich: dict) -> tuple[str, lis
 </div>
 """
     if cards:
+        # Map actor -> shortlist row for justification context
+        short_by_name: dict[str, dict] = {}
+        for _t, _c, rows in shortlists:
+            for r in rows:
+                an = re.sub(r"\*+", "", r.get("Actor", "")).strip()
+                if an:
+                    short_by_name[an] = r
         card_html = []
         for c in cards:
             href = actor_slug_path(meta["slug"], c["name"])
@@ -1533,14 +1545,17 @@ def render_character(meta: dict, registry: dict, enrich: dict) -> tuple[str, lis
                 n = sc_score_num(val)
                 if n is not None:
                     score_map[full] = n
+            row_ctx = short_by_name.get(c["name"]) or {}
             for name_cat, weight, prompt in SECTION1:
                 score = score_map.get(name_cat, "—")
                 if str(score).isdigit():
                     wscore = sc_weighted(int(score), weight)
                     row_meta = f"Weight {weight} · Weighted {wscore:g}"
+                    why = justify_section1(name_cat, int(score), row_ctx, prompt=prompt)
                 else:
                     row_meta = f"Weight {weight}"
-                preview_rows.append(sc_row(name_cat, prompt, score, meta=row_meta))
+                    why = ""
+                preview_rows.append(sc_row(name_cat, prompt, score, meta=row_meta, why=why))
             m = re.search(r"(\d+)", c.get("creative") or "")
             creative_preview = int(m.group(1)) if m else None
             badge = (

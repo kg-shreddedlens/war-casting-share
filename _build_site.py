@@ -145,6 +145,241 @@ ENSEMBLE = {
     "lede": "Sales-Max, Balanced, and Lean Discovery packages scored for PoS and ROI.",
 }
 
+# Per-package briefing for the Ensemble share page (from Ensemble shred §3–§8).
+# Keys match cleaned Package column values (e.g. "B1 (primary)", "A1").
+PACKAGE_BRIEFS: dict[str, dict] = {
+    "A1": {
+        "verdict": "Sales peak — fee volatile",
+        "why": (
+            "Highest ranked PoS (84%) with dual marquee gravity for the Spector / "
+            "acquisitions conversation. Maximum heat across all five roles."
+        ),
+        "good": [
+            "Peak sales chatter and prestige ceiling (Prestige 10).",
+            "Pugh microscopic lead energy + Gyllenhaal name gravity.",
+            "Wilson / Thompson / Ali is a premium supporting spine.",
+        ],
+        "bad": [
+            "Dual A-list fee risk can erase the low–mid budget advantage the deck sells.",
+            "Ceiling reads High / volatile — packaging can price itself out of the thesis.",
+        ],
+        "ugly": [
+            "Ali only works if Norman stays cameo-structured; a full detective arc lets a star demand closure and break the inconclusive file.",
+        ],
+        "caveats": [
+            "Prefer A3 or B1 for risk-adjusted packaging unless acquisitions explicitly need this heat.",
+            "Run parallel LOI waves — franchise / schedule conflicts are real on Pugh-class names.",
+        ],
+    },
+    "A2": {
+        "verdict": "Acquisitions — gate the fees",
+        "why": (
+            "Sales-Max with better median ROI than A1 (3.1x) and higher authenticity (9). "
+            "Comer intensity paired with Isaac ambiguity is a strong acquisitions story."
+        ),
+        "good": [
+            "Comer / Isaac carries both dread craft and buyer recognition.",
+            "Ferguson is a clinical Samantha foil; Brown anchors Norman without crusading.",
+            "Still a High ceiling without A1’s Prestige-10 fee panic.",
+        ],
+        "bad": [
+            "Fee stack remains high — only recommend if fees are gated (P2 posture).",
+            "Kravitz Melina can tip vampier than the soft-temptation lock.",
+        ],
+        "ugly": [
+            "Comer / Isaac schedule and franchise conflicts can stall LOIs for months.",
+        ],
+        "caveats": [
+            "Treat as RECOMMEND only when backend / quote discipline is locked.",
+            "Keep a Melina look check against writer references before soft-offer.",
+        ],
+    },
+    "A3": {
+        "verdict": "Best risk-adjusted Sales-Max",
+        "why": (
+            "Matches the valuation sheet and the Skydance husband note (Redmayne) without "
+            "stacking two Extremely High lead fees. Strongest disciplined Sales-Max."
+        ),
+        "good": [
+            "Kirby Med/High Sheila leverage + Redmayne financing pull.",
+            "Asomugha keeps the writer-locked Norman; Wilson locks the sister foil.",
+            "ROI 3.3x with Auth 9 — better efficiency than A1.",
+        ],
+        "bad": [
+            "PoS 80 sits under A1/A2; Prestige 8 is strong but not max heat.",
+            "Redmayne alone can still stretch a mid-high model.",
+        ],
+        "ugly": [
+            "If Redmayne quotes like an Extremely High feeler, you quietly recreate the A1 fee problem on one side of the marriage.",
+        ],
+        "caveats": [
+            "Default Sales-Max if buyers demand marquee without dual A-list insanity.",
+            "Keep B1 live in parallel — same Sheila, cheaper James ambiguity craft.",
+        ],
+    },
+    "B1 (primary)": {
+        "verdict": "RECOMMEND PACKAGE",
+        "why": (
+            "Primary Balanced default: sheet-aligned Sheila leverage, James as an ambiguity "
+            "engine (not a charm lead), writer-locked Norman, and Melina look efficiency. "
+            "Best PoS × efficiency in the grid (83% / 3.5x)."
+        ),
+        "good": [
+            "Chemistry pairs score ≥8 (Kirby↔Abbott 9; sister and interrogation pairs 8).",
+            "PR cluster stays clean; Package Risk Low–Moderate.",
+            "Nnamdi single-role rule respected — Norman only, not James.",
+        ],
+        "bad": [
+            "Abbott is craft-first, not a Spector “bigger name” headline by himself.",
+            "Onieogou needs a chemistry read with Abbott before the workplace gravity locks.",
+        ],
+        "ugly": [
+            "If Kirby declines and no Foy parallel is live, the whole investor narrative has to be rewritten mid-outreach.",
+        ],
+        "caveats": [
+            "Keep James off comic-charm casting — tone clash risk stays Low only on this read.",
+            "LOI order starts Kirby → Foy parallel → Abbott → Asomugha → Wilson → Onieogou.",
+        ],
+    },
+    "B2": {
+        "verdict": "Kirby-decline parallel",
+        "why": (
+            "Prestige-pair alternate when Kirby is unavailable: Foy↔O’Connor chemistry scores 9 "
+            "and keeps Balanced efficiency (81% / 3.4x) without dropping into Lean."
+        ),
+        "good": [
+            "Foy Med/High Sheila value per Buffalo 8 / sales feedback.",
+            "Coon is an overqualified Samantha instrument; Hornsby holds inconclusive Norman.",
+            "Beetz Melina keeps soft presence without forcing vamp.",
+        ],
+        "bad": [
+            "Slightly under B1 on PoS and ROI.",
+            "Crown associations can telegraph prestige TV before marriage-horror.",
+        ],
+        "ugly": [
+            "Stacking too much Crown DNA (Foy + O’Connor adjacency in buyer brains) can make the package feel like a royal-drama leftover, not doppelgänger dread.",
+        ],
+        "caveats": [
+            "Run as the live Sheila parallel while Kirby LOIs are out.",
+            "Tone materials should lead with Invisible Man / Us comps, not Crown stills.",
+        ],
+    },
+    "B3": {
+        "verdict": "Awards-forward alternate",
+        "why": (
+            "Negga↔Redmayne tells an awards-capable marriage story with Auth 9 and solid "
+            "ROI (3.3x). Financing narrative shifts from sheet leverage to craft prestige."
+        ),
+        "good": [
+            "Negga awards credibility; Redmayne still carries the Skydance husband note.",
+            "Condon / Thompson / Holland is a high-craft supporting set.",
+            "Strong if the desk is filmmaker-forward rather than Spector-marquee.",
+        ],
+        "bad": [
+            "Leverage 7 — weaker sheet pull than Kirby/Foy lanes.",
+            "PoS 80 is fine, not primary.",
+        ],
+        "ugly": [
+            "Ethnicity / look story must be intentional versus writer guidance — do not accidentally sell two conflicting Sheila theses at once.",
+        ],
+        "caveats": [
+            "Align Russell on the James / Sheila ethnicity branch before dual LOI stories.",
+            "Use when awards packaging matters more than Buffalo 8 peak leverage.",
+        ],
+    },
+    "B4": {
+        "verdict": "Wildcard craft — CONSIDER",
+        "why": (
+            "Festival / SPC filmmaker-forward package with the grid’s best median ROI (3.6x) "
+            "and Auth 10. Discovery story is the point, not marquee gravity."
+        ),
+        "good": [
+            "Reinsve + Abbott is pure ambiguity craft; Clifford Samantha is efficient.",
+            "Myha’la Melina and Asomugha Norman keep locks honest.",
+            "Highest authenticity score in the scenario grid.",
+        ],
+        "bad": [
+            "Leverage 6 and PoS 77 — Spector “bigger names” path is weak here.",
+            "Ceiling Moderate+; acquisitions desks may shrug without a lead marquee.",
+        ],
+        "ugly": [
+            "Pitching B4 to a Grindstone-style buyer as if it were A1 is how packages die in the room.",
+        ],
+        "caveats": [
+            "CONSIDER for SPC / filmmaker-forward capital only (P4).",
+            "Keep A/B feelers alive if this is a creative preference, not the financing spine.",
+        ],
+    },
+    "C1": {
+        "verdict": "Lean efficiency — CONSIDER",
+        "why": (
+            "Cost-controlled discovery with horror-fluent Sheila (Clark) and Moonlight-depth "
+            "James (Rhodes), while retaining Asomugha’s Norman lock and Coon’s Samantha steel."
+        ),
+        "good": [
+            "Cost efficiency 9; ROI 3.2x still healthy for Lean.",
+            "Concept-led capital can buy this without erasing budget advantage.",
+            "Auth 9 — craft does not collapse when marquee leaves.",
+        ],
+        "bad": [
+            "PoS 74; marquee gravity target is (not met) for Spector-style buyers.",
+            "Ceiling Moderate — sales chat gets quieter.",
+        ],
+        "ugly": [
+            "Rings of Power heat on Clark can fight a contained marriage-horror sell if materials are lazy.",
+        ],
+        "caveats": [
+            "Works when investor thesis is concept + prior film success, not marquee.",
+            "Do not pretend this is a Sales-Max package.",
+        ],
+    },
+    "C2": {
+        "verdict": "Lean authenticity path",
+        "why": (
+            "Lowest-cost authenticity package: Campbell / Hodge leads with Clifford / Myha’la / "
+            "Morgan support. Built for tax/stream efficiency and discovery narrative."
+        ),
+        "good": [
+            "Cost efficiency 9; Hodge carries James-or-Norman lane flexibility in the wider shred.",
+            "UK / working-actor credibility without fake prestige.",
+        ],
+        "bad": [
+            "PoS 71 — weakest ranked package on probability of success.",
+            "Almost no acquisitions gravity without a lead marquee.",
+        ],
+        "ugly": [
+            "If this is the only package in the room, you are asking capital to fund a concept with almost no talent insurance.",
+        ],
+        "caveats": [
+            "Discovery packaging only — keep B1 faces in the pitch deck even if C2 is the close.",
+            "Morgan Norman must stay inconclusive; no crusading-star rewrite.",
+        ],
+    },
+    "C3": {
+        "verdict": "Ethnicity-branch lean",
+        "why": (
+            "Lean package that retains Abbott’s uncanny James craft while testing a Beharie "
+            "Sheila ethnicity-branch read (72% PoS / 3.3x ROI / Auth 9)."
+        ),
+        "good": [
+            "Abbott continuity with Balanced James thinking.",
+            "Doherty / Clemons / Joseph keeps cost efficiency high.",
+            "Useful if Russell locks a non-default ethnicity story early.",
+        ],
+        "bad": [
+            "Beharie Sheila leverage is Low on the valuation sheet.",
+            "PoS 72 — still under Balanced defaults.",
+        ],
+        "ugly": [
+            "Running C3 and B1 outreach simultaneously without an ethnicity decision creates two movies in buyers’ heads.",
+        ],
+        "caveats": [
+            "Align Russell on White-mix vs Black/AA-mix James/Sheila branches before dual LOI stories.",
+            "Treat as a deliberate branch, not a silent backup.",
+        ],
+    },
+}
+
 # Fallback curated reels / profiles if enrichment.json is incomplete
 FALLBACK_ENRICH = {
     "Vanessa Kirby": {
@@ -384,13 +619,38 @@ a{color:var(--ink)}a:hover{color:var(--accent)}
   .sc-row{grid-template-columns:1fr;gap:10px}
   .sc-score{text-align:left}
 }
-.pkg-grid{display:grid;gap:12px;margin-top:16px}
-.pkg{border:1px solid var(--ink);padding:16px 18px;display:grid;gap:8px}
+.pkg-grid{display:grid;gap:18px;margin-top:16px}
+.pkg{border:1px solid var(--ink);padding:20px 22px;display:grid;gap:14px;background:#fff;border-radius:var(--radius)}
 .pkg.primary{border-width:3px}
-.pkg h3{font-family:"Bebas Neue",sans-serif;font-size:1.5rem;margin:0;letter-spacing:.03em}
-.pkg .metrics{font-family:"DM Sans",sans-serif;font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:700}
+.pkg-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:10px 18px}
+.pkg h3{font-family:"Bebas Neue",sans-serif;font-size:1.85rem;margin:0;letter-spacing:.03em}
+.pkg-verdict{margin:0;font-family:"DM Sans",sans-serif;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--accent)}
+.pkg .metrics{font-family:"DM Sans",sans-serif;font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;width:100%}
 .pkg .metrics strong{color:var(--accent)}
-.pkg ul{margin:0;padding-left:18px;color:var(--muted);line-height:1.5;font-weight:500}
+.pkg-body{display:grid;grid-template-columns:minmax(180px,.85fr) minmax(240px,1.4fr);gap:22px 28px;align-items:start}
+@media(max-width:800px){.pkg-body{grid-template-columns:1fr}}
+.pkg-cast h4,.pkg-analysis h4,.pkg-gbu h5,.ens-block h3{font-family:"DM Sans",sans-serif;font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;margin:0 0 8px;color:var(--ink)}
+.pkg-cast ul,.pkg-analysis ul,.ens-block ul{margin:0;padding-left:1.15rem;color:var(--muted);line-height:1.45;font-weight:500;font-size:14px}
+.pkg-cast li,.pkg-analysis li,.ens-block li{margin:0 0 6px}
+.pkg-why{margin:0 0 12px;color:var(--muted);font-size:14.5px;line-height:1.5;font-weight:500}
+.pkg-gbu{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:12px 0}
+@media(max-width:900px){.pkg-gbu{grid-template-columns:1fr}}
+.pkg-gbu .gbu-good h5{color:#1a6b3c}
+.pkg-gbu .gbu-bad h5{color:#8a5a00}
+.pkg-gbu .gbu-ugly h5{color:var(--accent)}
+.pkg-caveats{margin-top:4px;padding-top:12px;border-top:1px solid var(--soft)}
+.ens-stack{display:grid;gap:28px;margin-top:40px}
+.ens-block{border-top:1px solid var(--soft);padding-top:22px}
+.ens-block p{margin:0;color:var(--muted);font-size:15px;line-height:1.55;font-weight:500;max-width:70ch}
+.ens-two{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+@media(max-width:800px){.ens-two{grid-template-columns:1fr}}
+.chem-table,.risk-table{width:100%;border-collapse:collapse;font-size:14px}
+.chem-table th,.risk-table th{text-align:left;font-family:"DM Sans",sans-serif;font-size:11px;letter-spacing:.1em;text-transform:uppercase;padding:8px 10px 8px 0;border-bottom:1px solid var(--ink);color:var(--muted)}
+.chem-table td,.risk-table td{padding:10px 10px 10px 0;border-bottom:1px solid var(--soft);vertical-align:top;color:var(--muted);font-weight:500;line-height:1.4}
+.chem-table td:first-child,.risk-table td:first-child{color:var(--ink);font-weight:700;white-space:nowrap}
+.loi-list{margin:0;padding-left:1.2rem;color:var(--muted);font-size:14.5px;line-height:1.5;font-weight:500;columns:2;gap:28px}
+@media(max-width:700px){.loi-list{columns:1}}
+.loi-list li{margin:0 0 8px;break-inside:avoid}
 .home-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-top:28px}
 .home-card{border:1px solid var(--ink);padding:18px;text-decoration:none;color:var(--ink);display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;min-height:150px;transition:transform .25s ease,border-color .25s ease}
 .home-card:hover{transform:translateY(-3px);border-color:var(--accent);color:var(--ink)}
@@ -1461,33 +1721,92 @@ def render_actor_page(name: str, payload: dict, enrich_one: dict, registry: dict
     return shell(f"{name} · {role['title']}", role["slug"], body, depth=1)
 
 
+def _brief_for_package(name: str) -> dict:
+    key = re.sub(r"\*+", "", name or "").strip()
+    if key in PACKAGE_BRIEFS:
+        return PACKAGE_BRIEFS[key]
+    # Allow "B1 (primary)" vs "B1"
+    short = key.split()[0] if key else ""
+    return PACKAGE_BRIEFS.get(short) or PACKAGE_BRIEFS.get(key.replace(" (primary)", "")) or {}
+
+
+def _ul(items: list[str]) -> str:
+    if not items:
+        return "<p class=\"pkg-why\">—</p>"
+    return "<ul>" + "".join(f"<li>{escape(x)}</li>" for x in items) + "</ul>"
+
+
+def render_package_card(p: dict) -> str:
+    brief = _brief_for_package(p["name"])
+    cls = "pkg primary" if p["primary"] else "pkg"
+    verdict = brief.get("verdict") or ("Primary package" if p["primary"] else "Scenario package")
+    why = brief.get("why") or "Briefing pending — see Ensemble shred."
+    norman = re.sub(r"\*+$", "", p["norman"]).strip()
+    analysis = f"""
+    <div class="pkg-analysis">
+      <h4>Why this package</h4>
+      <p class="pkg-why">{escape(why)}</p>
+      <div class="pkg-gbu">
+        <div class="gbu-good"><h5>The good</h5>{_ul(brief.get("good") or [])}</div>
+        <div class="gbu-bad"><h5>The bad</h5>{_ul(brief.get("bad") or [])}</div>
+        <div class="gbu-ugly"><h5>The ugly</h5>{_ul(brief.get("ugly") or [])}</div>
+      </div>
+      <div class="pkg-caveats">
+        <h4>Caveats</h4>
+        {_ul(brief.get("caveats") or [])}
+      </div>
+    </div>"""
+    return f"""<article class="{cls}" data-reveal>
+  <div class="pkg-head">
+    <h3>{escape(p['name'])}</h3>
+    <p class="pkg-verdict">{escape(verdict)}</p>
+    <div class="metrics">{escape(p['scenario'])} · <strong>{escape(p['pos'])}% PoS</strong> · ROI {escape(p['roi'])} · Auth {escape(p['auth'])}</div>
+  </div>
+  <div class="pkg-body">
+    <div class="pkg-cast">
+      <h4>Cast</h4>
+      <ul>
+        <li>Sheila — {escape(p['sheila'])}</li>
+        <li>James — {escape(p['james'])}</li>
+        <li>Samantha — {escape(p['samantha'])}</li>
+        <li>Melina — {escape(p['melina'])}</li>
+        <li>Norman — {escape(norman)}</li>
+      </ul>
+    </div>
+    {analysis}
+  </div>
+</article>"""
+
+
 def render_ensemble(registry: dict) -> str:
     meta = ENSEMBLE
     md = (DOCSWAMP / meta["file"]).read_text(encoding="utf-8")
     packages = extract_packages(md)
-    pkg_html = []
+    # Scenario order: keep shred order; group headers inside the grid via eyebrows
+    pkg_html: list[str] = []
+    last_scenario = None
     for p in packages:
-        cls = "pkg primary" if p["primary"] else "pkg"
-        pkg_html.append(
-            f"""<article class="{cls}" data-reveal>
-  <h3>{escape(p['name'])}</h3>
-  <div class="metrics">{escape(p['scenario'])} · <strong>{escape(p['pos'])}% PoS</strong> · ROI {escape(p['roi'])} · Auth {escape(p['auth'])}</div>
-  <ul>
-    <li>Sheila — {escape(p['sheila'])}</li>
-    <li>James — {escape(p['james'])}</li>
-    <li>Samantha — {escape(p['samantha'])}</li>
-    <li>Melina — {escape(p['melina'])}</li>
-    <li>Norman — {escape(p['norman'])}</li>
-  </ul>
-</article>"""
-        )
+        if p["scenario"] != last_scenario:
+            last_scenario = p["scenario"]
+            pkg_html.append(
+                f'<header class="section-head" data-reveal style="margin:28px 0 8px">'
+                f'<p class="eyebrow">Scenario</p>'
+                f'<h2 style="font-size:1.8rem">{escape(last_scenario)}</h2>'
+                f"</header>"
+            )
+        pkg_html.append(render_package_card(p))
+
     body = f"""
 <header class="hero" data-reveal>
   <div class="hero-copy">
     <p class="eyebrow">{escape(meta['tag'])}</p>
     <h1>{escape(meta['hero'])}</h1>
     <p>{escape(meta['lede'])}</p>
-    <div class="cta"><a class="btn" href="#packages">Packages</a><a class="btn ghost" href="index.html">Overview</a></div>
+    <div class="cta">
+      <a class="btn" href="#packages">Packages</a>
+      <a class="btn ghost" href="#why-b1">Why B1</a>
+      <a class="btn ghost" href="index.html">Overview</a>
+    </div>
   </div>
   <span class="avatar-wrap"><span class="avatar lg" style="display:grid;place-items:center;font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:.06em">B1</span></span>
 </header>
@@ -1495,9 +1814,78 @@ def render_ensemble(registry: dict) -> str:
   <header class="section-head">
     <p class="eyebrow">Scenario grid</p>
     <h2>Recommended packages</h2>
-    <p class="lede">Primary Balanced package B1 is marked with a heavier rule.</p>
+    <p class="lede">Primary Balanced package B1 is marked with a heavier rule. Each card carries the why, the caveats, and the good / bad / ugly.</p>
   </header>
   <div class="pkg-grid">{''.join(pkg_html)}</div>
+</section>
+<section class="ens-stack" id="why-b1" data-reveal>
+  <div class="ens-block">
+    <h3>Investor narrative</h3>
+    <p>WAR packages as a contained, concept-led marriage horror with Invisible Man–style upside: Sheila as an emotionally microscopic lead (Kirby / Foy / Negga band per sales feedback), James as an ambiguity engine (Abbott / O’Connor craft or Redmayne prestige), Melina as look-locked soft temptation, Samantha as the rational sister who almost explains it away, and Norman as the detective who cannot close the file. Attach LOIs in that order to convert existing investor interest into talent gravity — without forcing a dual Extremely High fee stack that would erase the low–mid budget advantage the deck sells.</p>
+  </div>
+  <div class="ens-two">
+    <div class="ens-block">
+      <h3>Chemistry matrix · B1</h3>
+      <table class="chem-table">
+        <thead><tr><th>Pair</th><th>Score</th><th>Note</th></tr></thead>
+        <tbody>
+          <tr><td>Kirby ↔ Abbott</td><td>9</td><td>Prestige restraint vs indie uncanny — marriage dread grammar</td></tr>
+          <tr><td>Abbott ↔ Onieogou</td><td>8</td><td>Soft workplace gravity; chemistry read required</td></tr>
+          <tr><td>Kirby ↔ Wilson</td><td>8</td><td>Sister foil: crown-steel vs clinical certainty</td></tr>
+          <tr><td>Kirby ↔ Asomugha</td><td>8</td><td>Interrogation stillness; inconclusive file stays honest</td></tr>
+          <tr><td>Foy ↔ O’Connor</td><td>9</td><td>B2 parallel prestige pair if Kirby declines</td></tr>
+          <tr><td>Negga ↔ Redmayne</td><td>8</td><td>B3 awards-forward alternate</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:12px">Must-pair gate: B1 pairs ≥ 8 (met).</p>
+    </div>
+    <div class="ens-block">
+      <h3>Aggregate risk</h3>
+      <table class="risk-table">
+        <thead><tr><th>Cluster</th><th>Reading</th><th>Mitigation</th></tr></thead>
+        <tbody>
+          <tr><td>Fee inflation</td><td>Moderate–High on A1</td><td>Prefer A3 / B1; backend for feelers</td></tr>
+          <tr><td>Schedule / franchise</td><td>Moderate on Pugh / Comer / Isaac</td><td>Parallel LOI waves</td></tr>
+          <tr><td>Tone clash</td><td>Low on B1</td><td>Keep James off comic-charm casting</td></tr>
+          <tr><td>Solver Norman</td><td>Low if Asomugha / Hornsby</td><td>No crusading star who demands closure</td></tr>
+          <tr><td>Spector gap</td><td>Moderate</td><td>Keep A-list feelers alive while closing B anchors</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:12px">Package Risk (B1): Low–Moderate.</p>
+    </div>
+  </div>
+  <div class="ens-two">
+    <div class="ens-block">
+      <h3>LOI outreach order</h3>
+      <ol class="loi-list">
+        <li>Vanessa Kirby — Sheila</li>
+        <li>Claire Foy — Sheila parallel</li>
+        <li>Christopher Abbott — James</li>
+        <li>Eddie Redmayne — James financing alt</li>
+        <li>Nnamdi Asomugha — Norman (writer lock)</li>
+        <li>Ruth Wilson — Samantha</li>
+        <li>Greta Onieogou — Melina</li>
+        <li>Feelers: Comer, O’Connor, Thompson, Pugh</li>
+      </ol>
+    </div>
+    <div class="ens-block">
+      <h3>Decline swaps</h3>
+      <table class="risk-table">
+        <thead><tr><th>If declines</th><th>Swap to</th></tr></thead>
+        <tbody>
+          <tr><td>Kirby</td><td>Foy → Negga → Comer → Reinsve</td></tr>
+          <tr><td>Abbott</td><td>O’Connor → Redmayne → Rhodes</td></tr>
+          <tr><td>Asomugha</td><td>Hornsby → Holland → Morgan</td></tr>
+          <tr><td>Wilson</td><td>Coon → Condon</td></tr>
+          <tr><td>Onieogou</td><td>Beetz → Clemons → Myha’la</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="ens-block">
+    <h3>Composite line</h3>
+    <p>WAR Ensemble · Package PoS peak 84% (A1) / recommended 83% (B1) · Best median ROI 3.6x (B4) / recommended 3.5x (B1) · Package Risk Low–Moderate → RECOMMEND PACKAGE (P1 Balanced / B1).</p>
+  </div>
 </section>
 """
     return shell(meta["title"], "ensemble", body)

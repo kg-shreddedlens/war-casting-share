@@ -1182,13 +1182,13 @@ def render_actor_page(name: str, payload: dict, enrich_one: dict, registry: dict
   </div>
 </section>
 {car}
+{reel_block(enrich_one)}
 <section data-reveal>
   {sc_html}
   <p class="fit" style="margin-top:22px"><strong>Notes.</strong> {escape(card.get('note') or note or '—')}</p>
   <p class="fit" style="margin-top:14px"><strong>Bio.</strong> {escape(shorten_bio(bio, 420) or 'Profile pending.')}</p>
   <p class="fit" style="margin-top:14px"><strong>Role emotional core.</strong> {escape(profile.get('Emotional core',''))}</p>
   <p class="fit" style="margin-top:14px"><strong>Why this lane.</strong> {escape(row.get('Notes',''))}</p>
-  {reel_block(enrich_one)}
 </section>
 """
     return shell(f"{name} · {role['title']}", role["slug"], body, depth=1)

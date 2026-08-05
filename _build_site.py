@@ -751,7 +751,7 @@ def carousel_html(name: str, main_src: str | None, gallery: dict, depth: int = 0
     board = [u for u in urls if u != main_src]
     if not board and main_src:
         board = [main_src]
-    board = board[:10]
+    board = board[:25]
     if not board:
         return f"""
 <div class="gallery-block" data-reveal>

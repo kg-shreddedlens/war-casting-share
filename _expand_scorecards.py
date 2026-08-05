@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Expand priority scorecards in WAR character shreds with full §4a attribute grids."""
+"""Expand priority scorecards in WAR character shreds with full Rubric V1 Section 1 tables."""
 from __future__ import annotations
 
 import re
@@ -7,8 +7,17 @@ from pathlib import Path
 
 DOCSWAMP = Path(__file__).resolve().parents[1]
 
+SECTION1 = [
+    ("Character Alignment", 22, "Does the actor align with physical, emotional, tonal, and regional traits?"),
+    ("On-Screen Presence", 17, "Charisma, magnetism, and visual command on screen"),
+    ("Chemistry Potential", 11, "Fit with romantic lead or ensemble? Prior co-star rapport?"),
+    ("Commercial Viability", 22, "Fanbase, genre appeal, box office/streaming record"),
+    ("Strategic Value", 11, "Awards potential, PR value, funding leverage"),
+    ("Artistic Contribution", 11, "Will they elevate the role through interpretation or improvisation?"),
+    ("Availability & Cost Fit", 6, "Affordability, scheduling fit, and representation access"),
+]
+
 # Curated 0–10 scores: Alignment, Presence, Chemistry, Commercial, Strategic, Artistic, Cost Fit
-# Keys: (role_file_fragment, actor_name)
 SCORES: dict[str, dict[str, tuple[int, int, int, int, int, int, int]]] = {
     "Sheila": {
         "Vanessa Kirby": (9, 9, 8, 9, 9, 8, 6),
@@ -27,6 +36,7 @@ SCORES: dict[str, dict[str, tuple[int, int, int, int, int, int, int]]] = {
         "Jake Gyllenhaal": (8, 10, 8, 10, 9, 8, 3),
         "Trevante Rhodes": (8, 8, 8, 6, 6, 8, 8),
         "Aldis Hodge": (8, 8, 7, 6, 6, 7, 9),
+        "John David Washington": (8, 8, 7, 9, 8, 8, 5),
     },
     "Samantha": {
         "Ruth Wilson": (9, 9, 8, 8, 8, 9, 7),
@@ -50,16 +60,6 @@ SCORES: dict[str, dict[str, tuple[int, int, int, int, int, int, int]]] = {
     },
 }
 
-ATTR_LABELS = [
-    "Character Alignment",
-    "On-Screen Presence",
-    "Chemistry Potential",
-    "Commercial Viability",
-    "Strategic Value",
-    "Artistic Contribution",
-    "Availability & Cost Fit",
-]
-
 FILES = {
     "Sheila": "SLS Casting Shred - WAR - Character - Sheila Collier - 2026-08-05.md",
     "James": "SLS Casting Shred - WAR - Character - James Collier - 2026-08-05.md",
@@ -70,9 +70,16 @@ FILES = {
 
 
 def table_for(scores: tuple[int, ...]) -> str:
-    rows = ["| Category | Score (0–10) |", "| --- | --- |"]
-    for label, val in zip(ATTR_LABELS, scores):
-        rows.append(f"| {label} | **{val}** |")
+    rows = [
+        "| Category | Weight | Score (0–10) | Weighted Score | Comments |",
+        "| --- | --- | --- | --- | --- |",
+    ]
+    total = 0.0
+    for (label, weight, prompt), val in zip(SECTION1, scores):
+        w = round(val * weight / 10, 1)
+        total += w
+        rows.append(f"| {label} | {weight} | **{val}** | {w:g} | {prompt} |")
+    rows.append(f"| **Total Weighted Score** |  |  | **{int(round(total))}/100** |  |")
     return "\n".join(rows)
 
 
@@ -85,22 +92,14 @@ def expand_file(role_key: str) -> None:
         name = m.group(1).strip()
         header = m.group(0).split("\n\n")[0]
         rest = m.group(2).strip() if m.group(2) else ""
-        # strip old inline attribute line if present
         note_lines = []
         for line in rest.splitlines():
             if re.match(r"^Alignment\s+\d+", line):
-                # keep anything after the attribute run as note
-                after = re.sub(
-                    r"^Alignment\s+\d+.*?Cost Fit\s+\d+\.?\s*",
-                    "",
-                    line,
-                ).strip()
+                after = re.sub(r"^Alignment\s+\d+.*?Cost Fit\s+\d+\.?\s*", "", line).strip()
                 if after:
                     note_lines.append(after)
                 continue
-            if line.startswith("| Category") or line.startswith("| ---") or re.match(r"^\| .+ \| \*\*\d+\*\* \|", line):
-                continue
-            if line.startswith("| --- | --- |"):
+            if line.startswith("|"):
                 continue
             note_lines.append(line)
         note = "\n".join(note_lines).strip()

@@ -18,6 +18,16 @@ from html import escape
 from pathlib import Path
 from urllib.parse import quote
 
+from _scorecard import (
+    SECTION1,
+    SHORT_TO_FULL,
+    build_full_scorecard,
+    full_scorecard_html,
+    money,
+    score_num as sc_score_num,
+    weighted as sc_weighted,
+)
+
 ROOT = Path(__file__).resolve().parent
 DOCSWAMP = ROOT.parent
 OUT = ROOT / "site"
@@ -289,7 +299,17 @@ a{color:var(--ink)}a:hover{color:var(--accent)}
 .attr{border:1px solid var(--ink);padding:10px 12px;background:#fff}
 .attr b{display:block;font-family:"DM Sans",sans-serif;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
 .attr span{font-family:"Bebas Neue",sans-serif;font-size:1.55rem}
-.pkg-grid{display:grid;gap:12px;margin-top:16px}
+.scorecard-full{margin-top:8px}
+.sc-h{font-family:"Bebas Neue",sans-serif;font-size:1.55rem;letter-spacing:.03em;margin:36px 0 6px}
+.sc-note{margin:0 0 12px;color:var(--muted);font-size:13px;font-weight:500;line-height:1.4}
+.sc-table-wrap{border:1px solid var(--ink);border-bottom:3px solid var(--ink);margin-bottom:8px}
+.sc-table{width:100%;border-collapse:collapse;min-width:720px;background:#fff}
+.sc-table th,.sc-table td{padding:10px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--soft);font-size:13.5px}
+.sc-table th{font-family:"DM Sans",sans-serif;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;border-bottom:2px solid var(--ink);background:#fafaf8}
+.sc-table td{font-weight:500;line-height:1.4}
+.sc-table td.num,.sc-table th.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.sc-table tfoot td{border-bottom:0;background:#f3f3f1;font-weight:600}
+.sc-table tbody tr:hover{background:#f7f7f5}.pkg-grid{display:grid;gap:12px;margin-top:16px}
 .pkg{border:1px solid var(--ink);padding:16px 18px;display:grid;gap:8px}
 .pkg.primary{border-width:3px}
 .pkg h3{font-family:"Bebas Neue",sans-serif;font-size:1.5rem;margin:0;letter-spacing:.03em}
@@ -466,7 +486,34 @@ def score_num(text: str) -> int | None:
     return int(m.group(1)) if m else None
 
 
-def roi_explain_html(creative: str, risk: str, roi: str, fee: str, fit: str) -> str:
+def roi_explain_html(creative: str, risk: str, roi: str, fee: str, fit: str, card: dict | None = None) -> str:
+    if card:
+        delta = card["roi_delta_usd"]
+        sign = "+" if delta >= 0 else "−"
+        uplift = card["roi_uplift_pct"]
+        uplift_sign = "+" if uplift >= 0 else ""
+        metrics = (
+            f"Creative <strong>{card['creative']}/100</strong> · "
+            f"Risk <strong>{card['risk_norm']}/100 ({escape(card['risk_level'])})</strong> · "
+            f"ROI <strong>{card['roi']}/100</strong> · "
+            f"Fee mid <strong>{escape(money(card['fee_mid']))}</strong> · "
+            f"Delta <strong>{sign}{escape(money(abs(delta)))}</strong> "
+            f"(<strong>{uplift_sign}{uplift}%</strong>)"
+        )
+        body = (
+            f"ROI is packaging efficiency at the fee-band midpoint. "
+            f"Cost {card['cost_sub']:g}/35 vs Value {card['value_sub']:g}/65 "
+            f"(rubric: Value − Cost + 35 → 0–100). "
+            f"Bands: Low &lt;$100K · Med $100–500K · High $500K–$1M · Extremely High &gt;$1M."
+        )
+        return f"""
+<div class="roi-box" data-reveal>
+  <h3>ROI · fee efficiency ($ / %)</h3>
+  <p class="roi-metrics">{metrics}</p>
+  <p>{body}</p>
+</div>
+"""
+    # fallback legacy
     c, r, o = score_num(creative), score_num(risk), score_num(roi)
     fee_q = fee_quantified(fee)
     spread = None if c is None or r is None else c - r
@@ -475,16 +522,14 @@ def roi_explain_html(creative: str, risk: str, roi: str, fee: str, fit: str) -> 
         sign = "+" if spread >= 0 else ""
         spread_txt = (
             f" Creative–Risk spread is <strong>{sign}{spread}</strong> pts "
-            f"({c} creative vs {r} risk) — positive spread means craft value outruns schedule/cash drag."
+            f"({c} creative vs {r} risk)."
         )
     roi_txt = f"{o}/100" if o is not None else (roi or "—")
     fit_n = score_num(fit)
     fit_bit = f" Shortlist fit {fit_n}/10." if fit_n is not None else ""
     body = (
-        f"ROI {escape(str(roi_txt))} is packaging efficiency: how much sales/press gravity you buy "
-        f"per dollar and avail risk at <strong>{escape(fee_q)}</strong>."
-        f"{spread_txt}{escape(fit_bit)} "
-        f"Bands: Low &lt;$100K · Med $100–500K · High $500K–$1M · Extremely High &gt;$1M."
+        f"ROI {escape(str(roi_txt))} at fee <strong>{escape(fee_q)}</strong>."
+        f"{spread_txt}{escape(fit_bit)}"
     )
     metrics = (
         f"Creative <strong>{escape(creative)}</strong> · Risk <strong>{escape(risk)}</strong> · "
@@ -575,10 +620,16 @@ def extract_scorecards(md: str) -> list[dict]:
     ):
         body = (m.group(6) or "").strip()
         attrs = []
-        # Prefer full rubric table
-        for am in re.finditer(r"^\| ([^|]+?) \| \*\*(\d+)\*\* \|", body, flags=re.M):
-            label = am.group(1).strip()
-            if label.lower() == "category":
+        # Prefer full rubric table: Category | Weight | **Score** | ...
+        for am in re.finditer(
+            r"^\| ([^|]+?) \|[^|]*\| \*\*(\d+)\*\* \|",
+            body,
+            flags=re.M,
+        ):
+            label = am.group(1).strip().lstrip("0123456789. ").strip()
+            if label.lower() in {"category", "total weighted score", "**total weighted score**"}:
+                continue
+            if "total" in label.lower():
                 continue
             short = (
                 label.replace("Character Alignment", "Alignment")
@@ -590,6 +641,22 @@ def extract_scorecards(md: str) -> list[dict]:
                 .replace("Availability & Cost Fit", "Cost Fit")
             )
             attrs.append((short, am.group(2)))
+        if not attrs:
+            # Legacy two-column: Category | **Score**
+            for am in re.finditer(r"^\| ([^|]+?) \| \*\*(\d+)\*\* \|", body, flags=re.M):
+                label = am.group(1).strip()
+                if label.lower() == "category":
+                    continue
+                short = (
+                    label.replace("Character Alignment", "Alignment")
+                    .replace("On-Screen Presence", "Presence")
+                    .replace("Chemistry Potential", "Chemistry")
+                    .replace("Commercial Viability", "Commercial")
+                    .replace("Strategic Value", "Strategic")
+                    .replace("Artistic Contribution", "Artistic")
+                    .replace("Availability & Cost Fit", "Cost Fit")
+                )
+                attrs.append((short, am.group(2)))
         if not attrs:
             for am in re.finditer(r"([A-Za-z][A-Za-z /&]+?)\s+(\d+)(?:/10)?", body):
                 label = am.group(1).strip(" ·")
@@ -965,23 +1032,39 @@ def render_character(meta: dict, registry: dict, enrich: dict) -> tuple[str, lis
             href = actor_slug_path(meta["slug"], c["name"])
             hs = headshot_src(c["name"], registry)
             avatar = avatar_html(hs, "", c["name"])
-            attrs = ""
-            if c["attrs"]:
-                attrs = '<div class="attr-grid">' + "".join(
-                    f'<div class="attr"><b>{escape(a)}</b><span>{escape(v)}</span></div>' for a, v in c["attrs"]
-                ) + "</div>"
-            else:
-                attrs = '<div class="attr-grid">' + "".join(
-                    f'<div class="attr"><b>{escape(a)}</b><span>{escape(v)}</span></div>'
-                    for a, v in synthesize_attrs({"Fit": "8", "Fee band": "Med"})
-                ) + "</div>"
+            # Build compact Section 1 preview rows from attrs
+            preview_rows = []
+            score_map = {}
+            for label, val in (c.get("attrs") or []):
+                full = SHORT_TO_FULL.get(label.lower().strip(), label.strip())
+                n = sc_score_num(val)
+                if n is not None:
+                    score_map[full] = n
+            for name_cat, weight, prompt in SECTION1:
+                score = score_map.get(name_cat, "—")
+                wscore = sc_weighted(int(score), weight) if str(score).isdigit() else "—"
+                preview_rows.append(
+                    f"<tr><td>{escape(name_cat)}</td><td class='num'>{weight}</td>"
+                    f"<td class='num'><strong>{escape(str(score))}</strong></td>"
+                    f"<td class='num'>{wscore if wscore=='—' else f'{wscore:g}'}</td>"
+                    f"<td>{escape(prompt)}</td></tr>"
+                )
+            preview = f"""
+<div class="table-wrap sc-table-wrap" style="margin-top:12px">
+  <table class="sc-table">
+    <thead><tr><th>Category</th><th>Weight</th><th>Score</th><th>Weighted</th><th>Comments</th></tr></thead>
+    <tbody>{''.join(preview_rows)}</tbody>
+  </table>
+</div>
+<p class="sc-note" style="margin-top:8px">Open actor shred for Sections 2–3 (Risk + ROI) and full fee $/%.</p>
+"""
             card_html.append(
-                f"""<a class="card" href="{escape(href)}" data-reveal>
+                f"""<a class="card" href="{escape(href)}" data-reveal style="grid-template-columns:auto 1fr">
   {avatar}
   <div>
     <h3>{escape(c['name'])}</h3>
     <div class="scores">Creative {escape(c['creative'])} · Risk {escape(c['risk'])} · ROI {escape(c['roi'])} · {escape(c['verdict'])}</div>
-    {attrs}
+    {preview}
     <p>{escape(c['note'])}</p>
     {icon_links(c['name'], registry, enrich)}
   </div>
@@ -992,7 +1075,7 @@ def render_character(meta: dict, registry: dict, enrich: dict) -> tuple[str, lis
   <header class="section-head">
     <p class="eyebrow">Priority picks</p>
     <h2>Scorecards</h2>
-    <p class="lede">Fully expanded creative / risk / ROI with attribute breakdown where scored.</p>
+    <p class="lede">Full SLS Casting Scorecard Rubric V1 — Section 1 preview here; open each actor for Risk + ROI tables.</p>
   </header>
   <div class="scorecards">{''.join(card_html)}</div>
 </section>
@@ -1025,34 +1108,35 @@ def render_actor_page(name: str, payload: dict, enrich_one: dict, registry: dict
     hs = headshot_src(name, registry, prefix="../assets/")
     avatar = avatar_html(hs, "main", name)
     bio = (registry.get(name) or {}).get("bio") or ""
+
+    existing = None
+    attrs = None
+    note = row.get("Notes", "") or ""
     if sc:
-        creative, risk, roi, verdict, note, attrs = (
-            sc["creative"],
-            sc["risk"],
-            sc["roi"],
-            sc["verdict"],
-            sc["note"],
-            sc["attrs"],
-        )
-    else:
-        fit = row.get("Fit", "")
-        creative = f"{int(fit) * 10}/100" if str(fit).isdigit() else "—/100"
-        risk = "12/100 (Low)"
-        roi = f"{max(50, int(fit) * 9)}/100" if str(fit).isdigit() else "—/100"
-        verdict = "SHORTLIST ENTRY"
-        note = row.get("Notes", "") or "Derived from shortlist fit/fee bands pending full LOI scorecard."
-        attrs = synthesize_attrs(row)
+        existing = {
+            "creative": sc.get("creative"),
+            "risk": sc.get("risk"),
+            "roi": sc.get("roi"),
+            "verdict": sc.get("verdict"),
+            "note": sc.get("note"),
+        }
+        attrs = sc.get("attrs")
+        note = sc.get("note") or note
 
-    if not attrs:
-        attrs = synthesize_attrs(row)
-
-    attr_html = '<div class="attr-grid">' + "".join(
-        f'<div class="attr"><b>{escape(a)}</b><span>{escape(v)}</span></div>' for a, v in attrs
-    ) + "</div>"
+    card = build_full_scorecard(row, attrs=attrs, note=note, existing=existing)
+    sc_html = full_scorecard_html(card)
+    # Compact ROI box in the header kv (full tables below already include ROI $/%)
+    fee_raw = row.get("Fee band", "")
+    roi_box = roi_explain_html(
+        f"{card['creative']}/100",
+        f"{card['risk_norm']}/100 ({card['risk_level']})",
+        f"{card['roi']}/100",
+        fee_raw,
+        row.get("Fit", ""),
+        card=card,
+    )
 
     car = carousel_html(name, hs, gallery, depth=1)
-    fee_raw = row.get("Fee band", "")
-    roi_box = roi_explain_html(creative, risk, roi, fee_raw, row.get("Fit", ""))
 
     body = f"""
 <header class="hero" data-reveal>
@@ -1079,6 +1163,9 @@ def render_actor_page(name: str, payload: dict, enrich_one: dict, registry: dict
       <dt>Leverage</dt><dd>{escape(row.get('Leverage',''))}</dd>
       <dt>Flags</dt><dd>{escape(row.get('Flags','').replace(',', ' ·'))}</dd>
       <dt>Avail risk</dt><dd>{escape(row.get('Avail risk',''))}</dd>
+      <dt>Creative</dt><dd>{card['creative']}/100</dd>
+      <dt>Risk</dt><dd>{card['risk_norm']}/100 ({escape(card['risk_level'])})</dd>
+      <dt>ROI</dt><dd>{card['roi']}/100 · {escape(money(card['fee_mid']))} mid · {"+" if card['roi_delta_usd']>=0 else "−"}{escape(money(abs(card['roi_delta_usd'])))} ({"+" if card['roi_uplift_pct']>=0 else ""}{card['roi_uplift_pct']}%)</dd>
       <dt>Role age</dt><dd>{escape(profile.get('Age',''))}</dd>
       <dt>Look lock</dt><dd>{escape(profile.get('Ethnicity / look',''))}</dd>
     </dl>
@@ -1088,13 +1175,8 @@ def render_actor_page(name: str, payload: dict, enrich_one: dict, registry: dict
 </section>
 {car}
 <section data-reveal>
-  <header class="section-head">
-    <p class="eyebrow">Expanded scorecard · Character Casting Rubric §4a</p>
-    <h2>{escape(verdict)}</h2>
-    <p class="lede">Creative {escape(creative)} · Risk {escape(risk)} · ROI {escape(roi)}</p>
-  </header>
-  {attr_html}
-  <p class="fit">{escape(note)}</p>
+  {sc_html}
+  <p class="fit" style="margin-top:22px"><strong>Notes.</strong> {escape(card.get('note') or note or '—')}</p>
   <p class="fit" style="margin-top:14px"><strong>Bio.</strong> {escape(shorten_bio(bio, 420) or 'Profile pending.')}</p>
   <p class="fit" style="margin-top:14px"><strong>Role emotional core.</strong> {escape(profile.get('Emotional core',''))}</p>
   <p class="fit" style="margin-top:14px"><strong>Why this lane.</strong> {escape(row.get('Notes',''))}</p>

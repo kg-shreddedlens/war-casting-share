@@ -152,8 +152,9 @@ PACKAGE_BRIEFS: dict[str, dict] = {
     "A1": {
         "verdict": "Sales peak — fee volatile",
         "why": (
-            "Highest ranked PoS (84%) with dual marquee gravity for the Spector / "
-            "acquisitions conversation. Maximum heat across all five roles."
+            "This is the strongest sales package in the grid (84% probability of success). "
+            "It puts widely recognized names in all five roles, which helps with acquisitions "
+            "buyers—but those same names make the fee stack the most expensive and least stable."
         ),
         "good": [
             "Peak sales chatter and prestige ceiling (Prestige 10).",
@@ -168,15 +169,16 @@ PACKAGE_BRIEFS: dict[str, dict] = {
             "Ali only works if Norman stays cameo-structured; a full detective arc lets a star demand closure and break the inconclusive file.",
         ],
         "caveats": [
-            "Prefer A3 or B1 for risk-adjusted packaging unless acquisitions explicitly need this heat.",
+            "Prefer A3 or B1 unless buyers specifically need this level of star power.",
             "Run parallel LOI waves — franchise / schedule conflicts are real on Pugh-class names.",
         ],
     },
     "A2": {
         "verdict": "Acquisitions — gate the fees",
         "why": (
-            "Sales-Max with better median ROI than A1 (3.1x) and higher authenticity (9). "
-            "Comer intensity paired with Isaac ambiguity is a strong acquisitions story."
+            "Still a high-profile Sales-Max package, but with better return on investment than "
+            "A1 (3.1x) and a higher authenticity score (9). Jodie Comer’s intensity and Oscar "
+            "Isaac’s unsettling presence give buyers a clear, marketable marriage-horror story."
         ),
         "good": [
             "Comer / Isaac carries both dread craft and buyer recognition.",
@@ -198,8 +200,9 @@ PACKAGE_BRIEFS: dict[str, dict] = {
     "A3": {
         "verdict": "Best risk-adjusted Sales-Max",
         "why": (
-            "Matches the valuation sheet and the Skydance husband note (Redmayne) without "
-            "stacking two Extremely High lead fees. Strongest disciplined Sales-Max."
+            "Hits the sales targets on the valuation sheet—including the Skydance preference "
+            "for a Redmayne-type husband—without paying two Extremely High lead fees. This is "
+            "the most controlled version of a Sales-Max package."
         ),
         "good": [
             "Kirby Med/High Sheila leverage + Redmayne financing pull.",
@@ -207,7 +210,7 @@ PACKAGE_BRIEFS: dict[str, dict] = {
             "ROI 3.3x with Auth 9 — better efficiency than A1.",
         ],
         "bad": [
-            "PoS 80 sits under A1/A2; Prestige 8 is strong but not max heat.",
+            "PoS 80 sits under A1/A2; Prestige 8 is strong but not the absolute peak.",
             "Redmayne alone can still stretch a mid-high model.",
         ],
         "ugly": [
@@ -221,9 +224,10 @@ PACKAGE_BRIEFS: dict[str, dict] = {
     "B1 (primary)": {
         "verdict": "RECOMMEND PACKAGE",
         "why": (
-            "Primary Balanced default: sheet-aligned Sheila leverage, James as an ambiguity "
-            "engine (not a charm lead), writer-locked Norman, and Melina look efficiency. "
-            "Best PoS × efficiency in the grid (83% / 3.5x)."
+            "This is the recommended Balanced package. Sheila has solid sales leverage, James "
+            "is cast for unease rather than charm, Norman matches the writer lock, and Melina "
+            "fits the look without overpaying. Best mix of success odds and efficiency in the "
+            "grid (83% probability of success, 3.5x ROI)."
         ),
         "good": [
             "Chemistry pairs score ≥8 (Kirby↔Abbott 9; sister and interrogation pairs 8).",
@@ -245,8 +249,9 @@ PACKAGE_BRIEFS: dict[str, dict] = {
     "B2": {
         "verdict": "Kirby-decline parallel",
         "why": (
-            "Prestige-pair alternate when Kirby is unavailable: Foy↔O’Connor chemistry scores 9 "
-            "and keeps Balanced efficiency (81% / 3.4x) without dropping into Lean."
+            "Use this if Vanessa Kirby is unavailable. Claire Foy and Josh O’Connor score a 9 "
+            "for on-screen chemistry and keep Balanced-level efficiency (81% probability of "
+            "success, 3.4x ROI) without dropping into a lean discovery package."
         ),
         "good": [
             "Foy Med/High Sheila value per Buffalo 8 / sales feedback.",
@@ -268,8 +273,9 @@ PACKAGE_BRIEFS: dict[str, dict] = {
     "B3": {
         "verdict": "Awards-forward alternate",
         "why": (
-            "Negga↔Redmayne tells an awards-capable marriage story with Auth 9 and solid "
-            "ROI (3.3x). Financing narrative shifts from sheet leverage to craft prestige."
+            "Ruth Negga and Eddie Redmayne sell a marriage story that can play for awards, "
+            "with authenticity at 9 and solid ROI (3.3x). The financing pitch leans on craft "
+            "and prestige rather than pure sales-sheet star leverage."
         ),
         "good": [
             "Negga awards credibility; Redmayne still carries the Skydance husband note.",
@@ -291,8 +297,9 @@ PACKAGE_BRIEFS: dict[str, dict] = {
     "B4": {
         "verdict": "Wildcard craft — CONSIDER",
         "why": (
-            "Festival / SPC filmmaker-forward package with the grid’s best median ROI (3.6x) "
-            "and Auth 10. Discovery story is the point, not marquee gravity."
+            "Built for festival and specialty buyers who care more about craft than big "
+            "marquee names. It posts the best median ROI in the grid (3.6x) and a perfect "
+            "authenticity score (10). The sell is discovery talent, not star power."
         ),
         "good": [
             "Reinsve + Abbott is pure ambiguity craft; Clifford Samantha is efficient.",
@@ -314,8 +321,9 @@ PACKAGE_BRIEFS: dict[str, dict] = {
     "C1": {
         "verdict": "Lean efficiency — CONSIDER",
         "why": (
-            "Cost-controlled discovery with horror-fluent Sheila (Clark) and Moonlight-depth "
-            "James (Rhodes), while retaining Asomugha’s Norman lock and Coon’s Samantha steel."
+            "A lower-cost discovery package: Morfydd Clark brings horror fluency as Sheila, "
+            "Trevante Rhodes brings dramatic depth as James, while Nnamdi Asomugha stays "
+            "locked as Norman and Carrie Coon anchors Samantha."
         ),
         "good": [
             "Cost efficiency 9; ROI 3.2x still healthy for Lean.",
@@ -337,8 +345,9 @@ PACKAGE_BRIEFS: dict[str, dict] = {
     "C2": {
         "verdict": "Lean authenticity path",
         "why": (
-            "Lowest-cost authenticity package: Campbell / Hodge leads with Clifford / Myha’la / "
-            "Morgan support. Built for tax/stream efficiency and discovery narrative."
+            "The cheapest authenticity-first package: Georgina Campbell and Aldis Hodge lead, "
+            "with Sian Clifford, Myha’la, and Rob Morgan in support. Designed for tax-credit "
+            "and streaming budgets where discovery casting is the point."
         ),
         "good": [
             "Cost efficiency 9; Hodge carries James-or-Norman lane flexibility in the wider shred.",
@@ -359,8 +368,9 @@ PACKAGE_BRIEFS: dict[str, dict] = {
     "C3": {
         "verdict": "Ethnicity-branch lean",
         "why": (
-            "Lean package that retains Abbott’s uncanny James craft while testing a Beharie "
-            "Sheila ethnicity-branch read (72% PoS / 3.3x ROI / Auth 9)."
+            "A lean option that keeps Christopher Abbott’s uncanny James casting while trying "
+            "Nicole Beharie as an ethnicity-branch Sheila. Numbers: 72% probability of success, "
+            "3.3x ROI, authenticity 9."
         ),
         "good": [
             "Abbott continuity with Balanced James thinking.",

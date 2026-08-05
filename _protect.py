@@ -29,6 +29,31 @@ def gen_password(n: int = 14) -> str:
     return "".join(secrets.choice(alphabet) for _ in range(n))
 
 
+def patch_always_remember(dist: Path) -> None:
+    """Force permanent remember-me on successful unlock (no checkbox required)."""
+    old = (
+        'const password = document.getElementById("staticrypt-password").value,\n'
+        '                    isRememberChecked = document.getElementById("staticrypt-remember").checked;'
+    )
+    new = (
+        'const password = document.getElementById("staticrypt-password").value,\n'
+        "                    isRememberChecked = true; // always remember across pages on this device"
+    )
+    hide = (
+        "if (isRememberEnabled) {\n"
+        '                        document.getElementById("staticrypt-remember-label").classList.remove("hidden");\n'
+        "                    }"
+    )
+    for path in dist.glob("*.html"):
+        text = path.read_text(encoding="utf-8")
+        if old not in text:
+            raise SystemExit(f"remember patch target missing in {path.name}")
+        text = text.replace(old, new)
+        text = text.replace(hide, "/* remember-me always on; checkbox hidden */")
+        path.write_text(text, encoding="utf-8")
+    print(f"patched always-remember on {len(list(dist.glob('*.html')))} files")
+
+
 def main() -> None:
     if not SITE.exists():
         raise SystemExit("Run _build_site.py first")
@@ -65,12 +90,13 @@ def main() -> None:
         "-p",
         password,
         "--short",
+        # 0 = remember with no expiration (localStorage unlocks every page forever)
         "--remember",
-        "7",
+        "0",
         "--template-title",
         "SLS WAR Casting",
         "--template-instructions",
-        "Enter the access password from your Shredded Lens contact.",
+        "Enter the access password from your Shredded Lens contact. You will only need this once on this device.",
         "--template-button",
         "ENTER",
         "--template-color-primary",
@@ -85,10 +111,14 @@ def main() -> None:
     if r.returncode != 0:
         raise SystemExit(r.returncode)
 
+    # Always persist unlock — do not require the "Remember me" checkbox.
+    patch_always_remember(DIST)
+
     # Copy a note
     (DIST / "README.md").write_text(
         "# WAR Casting (password protected)\n\n"
         "Open `index.html` (or the Pages URL). Enter the shared access password.\n"
+        "One unlock is remembered forever on that browser/device via localStorage.\n"
         "Content is AES-encrypted in the browser via staticrypt.\n",
         encoding="utf-8",
     )

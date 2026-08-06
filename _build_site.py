@@ -502,14 +502,20 @@ a{color:var(--ink)}a:hover{color:var(--accent)}
 .nav a:hover,.nav a.active{color:var(--accent)}
 .layout{display:grid;grid-template-columns:200px minmax(0,1fr);gap:28px;align-items:start}
 @media(max-width:900px){.layout{grid-template-columns:1fr;gap:16px}}
-.side-nav{position:sticky;top:16px;display:flex;flex-direction:column;gap:6px;padding:14px 12px;border:1px solid var(--ink);border-radius:var(--radius);background:#fff}
-@media(max-width:900px){.side-nav{position:static;display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}}
+.side-nav{position:sticky;top:16px;display:flex;flex-direction:column;gap:6px;padding:14px 12px;border:1px solid var(--ink);border-radius:var(--radius);background:#fff;max-height:calc(100vh - 32px);overflow:auto}
+@media(max-width:900px){.side-nav{position:static;display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;max-height:none}}
 .side-label{font-family:"DM Sans",sans-serif;font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--muted);margin:10px 2px 4px}
 .side-label:first-child{margin-top:0}
 .side-link{display:block;text-decoration:none;padding:10px 12px;font-family:"Bebas Neue",sans-serif;font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink);border:1px solid var(--soft);border-radius:8px;background:#fafaf8;line-height:1.1;transition:border-color .15s ease,background .15s ease,color .15s ease}
 .side-link:hover{border-color:var(--accent);color:var(--accent)}
 .side-link.active{background:var(--ink);color:#fff;border-color:var(--ink)}
 .side-link.active:hover{color:#fff;border-color:var(--accent)}
+.side-sub{display:flex;flex-direction:column;gap:3px;margin:0 0 6px 8px;padding:4px 0 6px 10px;border-left:2px solid var(--soft)}
+@media(max-width:900px){.side-sub{grid-column:1/-1;margin-left:4px}}
+.side-sublabel{font-family:"DM Sans",sans-serif;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:6px 0 2px;font-weight:700}
+.side-sublink{display:block;text-decoration:none;padding:6px 8px;font-family:"DM Sans",sans-serif;font-size:12px;font-weight:600;color:var(--ink);border-radius:6px;line-height:1.2}
+.side-sublink:hover{background:#f0eeea;color:var(--accent)}
+.side-sublink.active{background:var(--soft);color:var(--ink)}
 .main{min-width:0}
 .hero{padding:28px 0 20px;border-bottom:1px solid var(--ink);display:grid;grid-template-columns:1fr auto;gap:28px;align-items:center}
 @media(max-width:800px){.hero{grid-template-columns:1fr}}
@@ -598,8 +604,9 @@ a{color:var(--ink)}a:hover{color:var(--accent)}
 .info-tile .slist-bio-list{margin-top:4px}
 .info-tile .info-prose{margin:0;color:var(--muted);font-size:14.5px;line-height:1.5;font-weight:500}
 .scorecards{display:grid;gap:16px;margin-top:18px}
-.card{border:1px solid var(--ink);padding:18px 20px;display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start;text-decoration:none;color:inherit;transition:transform .2s ease,border-color .2s ease;border-radius:2px}
+.card{border:1px solid var(--ink);padding:18px 20px;display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start;text-decoration:none;color:inherit;transition:transform .2s ease,border-color .2s ease;border-radius:2px;cursor:pointer}
 .card:hover{transform:translateY(-2px);border-color:var(--accent);color:inherit}
+.card:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 .card h3{font-family:"Bebas Neue",sans-serif;font-size:1.7rem;margin:0 0 6px;letter-spacing:.03em}
 .card .scores{font-family:"DM Sans",sans-serif;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;font-weight:700}
 .card p{margin:0;line-height:1.45;color:var(--muted);font-weight:500}
@@ -664,16 +671,15 @@ a{color:var(--ink)}a:hover{color:var(--accent)}
 .pkg-verdict{margin:0;font-family:"DM Sans",sans-serif;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--accent)}
 .pkg .metrics{font-family:"DM Sans",sans-serif;font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;width:100%}
 .pkg .metrics strong{color:var(--accent)}
-.pkg-body{display:grid;grid-template-columns:minmax(150px,.7fr) minmax(220px,1.05fr) minmax(240px,1.35fr);gap:18px 22px;align-items:start}
-@media(max-width:980px){.pkg-body{grid-template-columns:minmax(150px,.75fr) 1fr}.pkg-analysis{grid-column:1/-1}}
-@media(max-width:720px){.pkg-body{grid-template-columns:1fr}.pkg-analysis{grid-column:auto}}
+.pkg-body{display:grid;grid-template-columns:minmax(220px,.95fr) minmax(280px,1.45fr);gap:20px 28px;align-items:start}
+@media(max-width:900px){.pkg-body{grid-template-columns:1fr}}
+.pkg-col-cast{display:grid;gap:16px;min-width:0;align-content:start}
 .pkg-cast h4,.pkg-faces h4,.pkg-analysis h4,.pkg-gbu h5,.ens-block h3{font-family:"DM Sans",sans-serif;font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;margin:0 0 8px;color:var(--ink)}
 .pkg-cast ul,.pkg-analysis ul,.ens-block ul{margin:0;padding-left:1.15rem;color:var(--muted);line-height:1.45;font-weight:500;font-size:14px}
 .pkg-cast li,.pkg-analysis li,.ens-block li{margin:0 0 6px}
 .pkg-faces{min-width:0}
 .pkg-face-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
-@media(max-width:1100px){.pkg-face-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media(max-width:720px){.pkg-face-grid{grid-template-columns:repeat(5,minmax(0,1fr))}}
+@media(max-width:720px){.pkg-face-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .pkg-face{display:flex;flex-direction:column;gap:5px;text-decoration:none;color:inherit;min-width:0;transition:transform .18s ease}
 .pkg-face:hover{transform:translateY(-2px);color:inherit}
 .pkg-face img,.pkg-face .pkg-face-ph{width:100%;aspect-ratio:1;object-fit:cover;object-position:center 18%;border-radius:8px;border:1.5px solid var(--ink);background:#eee;display:block}
@@ -745,15 +751,9 @@ a{color:var(--ink)}a:hover{color:var(--accent)}
 .still-grid img{width:100%;aspect-ratio:1;height:auto;object-fit:cover;object-position:center 18%;border-radius:var(--radius);border:2px solid var(--ink);display:block;background:#eee;transition:transform .2s ease,border-color .2s ease}
 .still-grid a.still-link:hover img{transform:scale(1.04);border-color:var(--accent)}
 .carousel-empty{border:1px dashed var(--soft);padding:18px;color:var(--muted);font-size:14px;font-weight:500}
-[data-reveal]{opacity:0;transform:translateY(14px);transition:opacity .7s ease,transform .7s ease}
-[data-reveal].in{opacity:1;transform:none}
 """
 
 JS = """
-const io = new IntersectionObserver((entries) => {
-  entries.forEach((e) => { if (e.isIntersecting) e.target.classList.add('in'); });
-}, { threshold: 0.12 });
-document.querySelectorAll('[data-reveal]').forEach((el) => io.observe(el));
 document.querySelectorAll('[data-href]').forEach((el) => {
   el.addEventListener('click', (e) => {
     if (e.target.closest('a')) return;
@@ -1052,7 +1052,7 @@ def roi_explain_html(creative: str, risk: str, roi: str, fee: str, fit: str, car
             "Bands: Low &lt;$100K · Med $100–500K · High $500K–$1M · Extremely High &gt;$1M."
         )
         return f"""
-<div class="info-tile span-2 roi-box" data-reveal>
+<div class="info-tile span-2 roi-box">
   <h3>ROI · fee efficiency</h3>
   <div class="roi-mini-grid">{minis}</div>
   <p class="roi-note">{note}</p>
@@ -1061,7 +1061,7 @@ def roi_explain_html(creative: str, risk: str, roi: str, fee: str, fit: str, car
     # fallback legacy
     fee_q = fee_quantified(fee)
     return f"""
-<div class="info-tile span-2 roi-box" data-reveal>
+<div class="info-tile span-2 roi-box">
   <h3>ROI · fee efficiency</h3>
   <div class="roi-mini-grid">
     {_roi_mini("ROI", escape(roi or "—"))}
@@ -1411,7 +1411,7 @@ def carousel_html(
     board_raw = board_raw[:25]
     if not board_raw:
         return f"""
-<div class="gallery-block" data-reveal>
+<div class="gallery-block">
   <p class="eyebrow">Image board</p>
   <p class="carousel-empty">No stills for {escape(name)} yet — headshot only above.</p>
 </div>
@@ -1429,7 +1429,7 @@ def carousel_html(
         )
     plural = "s" if len(board_raw) != 1 else ""
     return f"""
-<div class="gallery-block" data-reveal>
+<div class="gallery-block">
   <p class="eyebrow">Image board · {len(board_raw)} still{plural} · 5×5 grid · click any still for source</p>
   <div class="still-grid">{''.join(figs)}</div>
 </div>
@@ -1642,26 +1642,111 @@ def nav_html(active: str, prefix: str = "") -> str:
     return '<nav class="nav">' + "".join(links) + "</nav>"
 
 
-def side_nav_html(active: str, prefix: str = "") -> str:
-    """Left section nav: Overview, Leads (characters), Ensemble Packages."""
+def _tier_nav_label(code: str, title: str = "") -> str:
+    c = (code or "").upper()
+    if c == "A":
+        return "A-List"
+    if c == "B":
+        return "B-List"
+    if c == "C":
+        return "C-List"
+    if c == "U":
+        return "Unknowns"
+    return title or "Shortlist"
+
+
+def _first_name(name: str) -> str:
+    parts = (name or "").strip().split()
+    return parts[0] if parts else name
+
+
+def build_character_nav_context(
+    meta: dict,
+    shortlists: list[tuple[str, str, list[dict]]],
+    cards: list[dict],
+    *,
+    depth: int = 0,
+    active_actor: str | None = None,
+) -> dict:
+    """Side-nav submenu for one lead: tiers + scorecard first names."""
+    prefix = "../" * depth
+    page = f"{prefix}{meta['slug']}.html"
+    tiers: list[tuple[str, str]] = []
+    seen: set[str] = set()
+    for _title, code, _rows in shortlists:
+        key = (code or "U").upper()
+        if key in seen:
+            continue
+        seen.add(key)
+        tiers.append((_tier_nav_label(key, _title), f"{page}#tier-{key.lower()}"))
+    scorecards: list[tuple[str, str, bool]] = []
+    for c in cards:
+        nm = c.get("name") or ""
+        if not nm:
+            continue
+        scorecards.append(
+            (
+                _first_name(nm),
+                f"{page}#sc-{slugify(nm)}",
+                bool(active_actor and active_actor == nm),
+            )
+        )
+    return {
+        "character_slug": meta["slug"],
+        "tiers": tiers,
+        "scorecards": scorecards,
+    }
+
+
+def side_nav_html(active: str, prefix: str = "", nav_context: dict | None = None) -> str:
+    """Left section nav: Overview, Leads (with page submenus), Ensemble Packages."""
     parts: list[str] = [
         f'<a class="side-link {"active" if active == "index" else ""}" href="{prefix}index.html">Overview</a>',
         '<p class="side-label">Leads</p>',
     ]
+    ctx_slug = (nav_context or {}).get("character_slug")
     for c in CHARACTERS:
         cls = "active" if active == c["slug"] else ""
         parts.append(
             f'<a class="side-link {cls}" href="{prefix}{c["slug"]}.html">{escape(_char_nav_label(c))}</a>'
         )
+        if nav_context and ctx_slug == c["slug"]:
+            parts.append('<div class="side-sub">')
+            for label, href in nav_context.get("tiers") or []:
+                parts.append(
+                    f'<a class="side-sublink" href="{escape(href)}">{escape(label)}</a>'
+                )
+            scs = nav_context.get("scorecards") or []
+            if scs:
+                parts.append('<p class="side-sublabel">Scorecards</p>')
+                for label, href, is_active in scs:
+                    acls = " active" if is_active else ""
+                    parts.append(
+                        f'<a class="side-sublink{acls}" href="{escape(href)}">{escape(label)}</a>'
+                    )
+            parts.append("</div>")
     ens_cls = "active" if active == "ensemble" else ""
     parts.append('<p class="side-label">Ensemble</p>')
     parts.append(
         f'<a class="side-link {ens_cls}" href="{prefix}ensemble.html">Ensemble Packages</a>'
     )
+    if active == "ensemble" and nav_context and nav_context.get("packages"):
+        parts.append('<div class="side-sub">')
+        for label, href in nav_context["packages"]:
+            parts.append(
+                f'<a class="side-sublink" href="{escape(href)}">{escape(label)}</a>'
+            )
+        parts.append("</div>")
     return f'<nav class="side-nav" aria-label="Sections">{"".join(parts)}</nav>'
 
 
-def shell(title: str, active: str, body: str, depth: int = 0) -> str:
+def shell(
+    title: str,
+    active: str,
+    body: str,
+    depth: int = 0,
+    nav_context: dict | None = None,
+) -> str:
     prefix = "../" * depth
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -1683,7 +1768,7 @@ def shell(title: str, active: str, body: str, depth: int = 0) -> str:
   </div>
   {nav_html(active, prefix)}
   <div class="layout">
-    {side_nav_html(active, prefix)}
+    {side_nav_html(active, prefix, nav_context)}
     <div class="main">
       {body}
     </div>
@@ -1706,7 +1791,7 @@ def reel_block(en: dict, depth: int = 0) -> str:
     yid = reel["youtube_id"]
     thumb = f"https://img.youtube.com/vi/{yid}/hqdefault.jpg"
     return f"""
-<a class="reel" href="{escape(reel.get('url',''))}" target="_blank" rel="noopener" data-reveal>
+<a class="reel" href="{escape(reel.get('url',''))}" target="_blank" rel="noopener">
   <img src="{escape(thumb)}" alt="" loading="lazy" />
   <div>
     <p class="eyebrow">Performance reel</p>
@@ -1755,7 +1840,7 @@ def render_shortlist_section(role: dict, title: str, code: str, rows: list[dict]
             else ""
         )
         tiles.append(
-            f"""<article class="slist-tile"{clickable} data-reveal>
+            f"""<article class="slist-tile"{clickable}>
   <div class="slist-top">
     <span class="slist-rank">{str(i).zfill(2)}</span>
     <span class="tier tier-{code.lower()}">{escape(code)}</span>
@@ -1784,7 +1869,7 @@ def render_shortlist_section(role: dict, title: str, code: str, rows: list[dict]
         )
 
     return f"""
-<section class="shortlist" data-reveal>
+<section class="shortlist" id="tier-{code.lower()}">
   <header class="section-head">
     <p class="eyebrow">Shortlist · Tier {escape(code)}</p>
     <h2>{escape(title)}</h2>
@@ -1822,7 +1907,7 @@ def render_character(meta: dict, registry: dict, enrich: dict) -> tuple[str, lis
     fit = profile.get("Fit criteria", "")
 
     body = f"""
-<header class="hero" data-reveal>
+<header class="hero">
   <div class="hero-copy">
     <p class="eyebrow">{escape(meta['tag'])}</p>
     <h1>{escape(meta['hero'])}</h1>
@@ -1834,7 +1919,7 @@ def render_character(meta: dict, registry: dict, enrich: dict) -> tuple[str, lis
   </div>
   {avatar_html('assets/' + meta['portrait'], 'lg', meta['title'] + ' concept portrait')}
 </header>
-<section class="profile" data-reveal>
+<section class="profile">
   <dl>{''.join(dl)}</dl>
   {fit_criteria_html(fit)}
 </section>
@@ -1899,7 +1984,7 @@ def render_character(meta: dict, registry: dict, enrich: dict) -> tuple[str, lis
 </div>
 """
             card_html.append(
-                f"""<a class="card" href="{escape(href)}" data-reveal style="grid-template-columns:auto 1fr">
+                f"""<article class="card" id="sc-{slugify(c['name'])}" data-href="{escape(href)}" tabindex="0" role="link" style="grid-template-columns:auto 1fr">
   {avatar}
   <div>
     <h3>{escape(c['name'])}</h3>
@@ -1908,10 +1993,10 @@ def render_character(meta: dict, registry: dict, enrich: dict) -> tuple[str, lis
     <p>{escape(c['note'])}</p>
     {icon_links(c['name'], registry, enrich)}
   </div>
-</a>"""
+</article>"""
             )
         body += f"""
-<section data-reveal>
+<section id="scorecards">
   <header class="section-head">
     <p class="eyebrow">Priority picks</p>
     <h2>Scorecards</h2>
@@ -1920,6 +2005,8 @@ def render_character(meta: dict, registry: dict, enrich: dict) -> tuple[str, lis
   <div class="scorecards">{''.join(card_html)}</div>
 </section>
 """
+
+    nav_context = build_character_nav_context(meta, shortlists, cards, depth=0)
 
     # collect actor detail page payloads
     for title, code, rows in shortlists:
@@ -1934,10 +2021,13 @@ def render_character(meta: dict, registry: dict, enrich: dict) -> tuple[str, lis
                 "row": row,
                 "scorecard": card_by_name.get(name),
                 "profile": profile,
+                "nav_context": build_character_nav_context(
+                    meta, shortlists, cards, depth=1, active_actor=name
+                ),
             }
             actor_pages.append((name, payload, enrich.get(name) or {}))
 
-    return shell(meta["title"], meta["slug"], body), actor_pages
+    return shell(meta["title"], meta["slug"], body, nav_context=nav_context), actor_pages
 
 
 def render_actor_page(
@@ -2058,7 +2148,7 @@ def render_actor_page(
 
     # Scorecard early (before image board) so the page doesn't feel blank on scroll.
     body = f"""
-<header class="hero" data-reveal>
+<header class="hero">
   <div class="hero-copy">
     <p class="eyebrow">{escape(role['title'])} · Tier {escape(payload['tier'])}</p>
     <h1>{escape(name.upper())}</h1>
@@ -2070,7 +2160,7 @@ def render_actor_page(
     </div>
   </div>
 </header>
-<section class="detail-layout" data-reveal>
+<section class="detail-layout">
   <div>
     {avatar}
   </div>
@@ -2084,13 +2174,19 @@ def render_actor_page(
     {roi_box}
   </div>
 </section>
-<section id="scorecard" data-reveal>
+<section id="scorecard">
   {sc_html}
 </section>
 {car}
 {reel_block(enrich_one)}
 """
-    return shell(f"{name} · {role['title']}", role["slug"], body, depth=1)
+    return shell(
+        f"{name} · {role['title']}",
+        role["slug"],
+        body,
+        depth=1,
+        nav_context=payload.get("nav_context"),
+    )
 
 
 def _brief_for_package(name: str) -> dict:
@@ -2176,24 +2272,26 @@ def render_package_card(p: dict, registry: dict) -> str:
         {_caveat_tiles(brief.get("caveats") or [])}
       </div>
     </div>"""
-    return f"""<article class="{cls}" data-reveal>
+    return f"""<article class="{cls}" id="pkg-{escape(slugify(p['name']))}">
   <div class="pkg-head">
     <h3>{escape(p['name'])}</h3>
     <p class="pkg-verdict">{escape(verdict)}</p>
     <div class="metrics">{escape(p['scenario'])} · <strong>{escape(p['pos'])}% PoS</strong> · ROI {escape(p['roi'])} · Auth {escape(p['auth'])}</div>
   </div>
   <div class="pkg-body">
-    <div class="pkg-cast">
-      <h4>Cast</h4>
-      <ul>
-        <li>Sheila — {escape(p['sheila'])}</li>
-        <li>James — {escape(p['james'])}</li>
-        <li>Samantha — {escape(p['samantha'])}</li>
-        <li>Melina — {escape(p['melina'])}</li>
-        <li>Norman — {escape(norman)}</li>
-      </ul>
+    <div class="pkg-col-cast">
+      <div class="pkg-cast">
+        <h4>Cast</h4>
+        <ul>
+          <li>Sheila — {escape(p['sheila'])}</li>
+          <li>James — {escape(p['james'])}</li>
+          <li>Samantha — {escape(p['samantha'])}</li>
+          <li>Melina — {escape(p['melina'])}</li>
+          <li>Norman — {escape(norman)}</li>
+        </ul>
+      </div>
+      {faces}
     </div>
-    {faces}
     {analysis}
   </div>
 </article>"""
@@ -2206,19 +2304,24 @@ def render_ensemble(registry: dict) -> str:
     # Scenario order: keep shred order; group headers inside the grid via eyebrows
     pkg_html: list[str] = []
     last_scenario = None
+    pkg_nav: list[tuple[str, str]] = []
     for p in packages:
         if p["scenario"] != last_scenario:
             last_scenario = p["scenario"]
+            scen_id = f"scenario-{slugify(last_scenario.split('–')[0].strip() or last_scenario)}"
             pkg_html.append(
-                f'<header class="section-head" data-reveal style="margin:28px 0 8px">'
+                f'<header class="section-head" id="{escape(scen_id)}" style="margin:28px 0 8px">'
                 f'<p class="eyebrow">Scenario</p>'
                 f'<h2 style="font-size:1.8rem">{escape(last_scenario)}</h2>'
                 f"</header>"
             )
         pkg_html.append(render_package_card(p, registry))
+        short = re.sub(r"\*+", "", p["name"] or "").strip().split()[0]
+        if short:
+            pkg_nav.append((short, f"#pkg-{slugify(p['name'])}"))
 
     body = f"""
-<header class="hero" data-reveal>
+<header class="hero">
   <div class="hero-copy">
     <p class="eyebrow">{escape(meta['tag'])}</p>
     <h1>{escape(meta['hero'])}</h1>
@@ -2231,7 +2334,7 @@ def render_ensemble(registry: dict) -> str:
   </div>
   <span class="avatar-wrap"><span class="avatar lg" style="display:grid;place-items:center;font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:.06em">B1</span></span>
 </header>
-<section id="packages" data-reveal>
+<section id="packages">
   <header class="section-head">
     <p class="eyebrow">Scenario grid</p>
     <h2>Recommended packages</h2>
@@ -2239,7 +2342,7 @@ def render_ensemble(registry: dict) -> str:
   </header>
   <div class="pkg-grid">{''.join(pkg_html)}</div>
 </section>
-<section class="ens-stack" id="why-b1" data-reveal>
+<section class="ens-stack" id="why-b1">
   <div class="ens-block">
     <h3>Investor narrative</h3>
     <p>WAR packages as a contained, concept-led marriage horror with Invisible Man–style upside: Sheila as an emotionally microscopic lead (Kirby / Foy / Negga band per sales feedback), James as an ambiguity engine (Abbott / O’Connor craft or Redmayne prestige), Melina as look-locked soft temptation, Samantha as the rational sister who almost explains it away, and Norman as the detective who cannot close the file. Attach LOIs in that order to convert existing investor interest into talent gravity — without forcing a dual Extremely High fee stack that would erase the low–mid budget advantage the deck sells.</p>
@@ -2309,14 +2412,19 @@ def render_ensemble(registry: dict) -> str:
   </div>
 </section>
 """
-    return shell(meta["title"], "ensemble", body)
+    return shell(
+        meta["title"],
+        "ensemble",
+        body,
+        nav_context={"packages": pkg_nav},
+    )
 
 
 def render_index() -> str:
     cards = []
     for i, c in enumerate(CHARACTERS, 1):
         cards.append(
-            f"""<a class="home-card" href="{c['slug']}.html" data-reveal>
+            f"""<a class="home-card" href="{c['slug']}.html">
   <div>
     <span class="n">{str(i).zfill(2)}</span>
     <h2>{escape(c['hero'])}</h2>
@@ -2326,7 +2434,7 @@ def render_index() -> str:
 </a>"""
         )
     cards.append(
-        f"""<a class="home-card" href="ensemble.html" data-reveal>
+        f"""<a class="home-card" href="ensemble.html">
   <div>
     <span class="n">06</span>
     <h2>ENSEMBLE</h2>
@@ -2336,7 +2444,7 @@ def render_index() -> str:
 </a>"""
     )
     body = f"""
-<header class="hero" data-reveal>
+<header class="hero">
   <div class="hero-copy">
     <p class="eyebrow">Shredded Lens · Character &amp; ensemble casting</p>
     <h1>WAR CASTING</h1>

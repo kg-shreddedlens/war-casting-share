@@ -492,7 +492,7 @@ CSS = r"""
 *{box-sizing:border-box}html,body{margin:0}
 body{background:var(--bg);color:var(--ink);font-family:"DM Sans",system-ui,sans-serif;min-height:100vh;font-optical-sizing:auto}
 a{color:var(--ink)}a:hover{color:var(--accent)}
-.wrap{max-width:1140px;margin:0 auto;padding:20px 20px 80px}
+.wrap{max-width:1320px;margin:0 auto;padding:20px 20px 80px}
 .top{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid var(--ink);padding-bottom:10px;margin-bottom:18px;gap:16px;flex-wrap:wrap}
 .brand{font-family:"Bebas Neue",sans-serif;font-size:42px;letter-spacing:.04em;line-height:1;text-decoration:none;color:var(--ink)}
 .brand span{color:var(--accent)}
@@ -500,6 +500,17 @@ a{color:var(--ink)}a:hover{color:var(--accent)}
 .nav{display:flex;gap:14px;flex-wrap:wrap;border-bottom:1px solid var(--ink);padding:12px 0 14px;margin-bottom:8px}
 .nav a{font-family:"DM Sans",sans-serif;font-size:11px;letter-spacing:.12em;text-transform:uppercase;text-decoration:none;color:var(--muted);font-weight:600}
 .nav a:hover,.nav a.active{color:var(--accent)}
+.layout{display:grid;grid-template-columns:200px minmax(0,1fr);gap:28px;align-items:start}
+@media(max-width:900px){.layout{grid-template-columns:1fr;gap:16px}}
+.side-nav{position:sticky;top:16px;display:flex;flex-direction:column;gap:6px;padding:14px 12px;border:1px solid var(--ink);border-radius:var(--radius);background:#fff}
+@media(max-width:900px){.side-nav{position:static;display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}}
+.side-label{font-family:"DM Sans",sans-serif;font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--muted);margin:10px 2px 4px}
+.side-label:first-child{margin-top:0}
+.side-link{display:block;text-decoration:none;padding:10px 12px;font-family:"Bebas Neue",sans-serif;font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink);border:1px solid var(--soft);border-radius:8px;background:#fafaf8;line-height:1.1;transition:border-color .15s ease,background .15s ease,color .15s ease}
+.side-link:hover{border-color:var(--accent);color:var(--accent)}
+.side-link.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+.side-link.active:hover{color:#fff;border-color:var(--accent)}
+.main{min-width:0}
 .hero{padding:28px 0 20px;border-bottom:1px solid var(--ink);display:grid;grid-template-columns:1fr auto;gap:28px;align-items:center}
 @media(max-width:800px){.hero{grid-template-columns:1fr}}
 .hero-copy h1{font-family:"Bebas Neue",sans-serif;font-size:clamp(3.5rem,10vw,7rem);line-height:.85;margin:0 0 12px;letter-spacing:.02em;max-width:14ch}
@@ -1613,11 +1624,17 @@ def headshot_src(name: str, registry: dict, prefix: str = "assets/") -> str | No
     return None
 
 
+def _char_nav_label(c: dict) -> str:
+    if c["slug"] == "norman":
+        return "Detective"
+    return c["title"].split()[0]
+
+
 def nav_html(active: str, prefix: str = "") -> str:
     items = [(f"{prefix}index.html", "Overview", "index")]
     for c in CHARACTERS:
-        items.append((f"{prefix}{c['slug']}.html", c["title"].split()[0] if c["slug"] != "norman" else "Detective", c["slug"]))
-    items.append((f"{prefix}ensemble.html", "Ensemble", "ensemble"))
+        items.append((f"{prefix}{c['slug']}.html", _char_nav_label(c), c["slug"]))
+    items.append((f"{prefix}ensemble.html", "Ensemble Packages", "ensemble"))
     links = []
     for href, label, key in items:
         cls = "active" if key == active else ""
@@ -1625,9 +1642,27 @@ def nav_html(active: str, prefix: str = "") -> str:
     return '<nav class="nav">' + "".join(links) + "</nav>"
 
 
+def side_nav_html(active: str, prefix: str = "") -> str:
+    """Left section nav: Overview, Leads (characters), Ensemble Packages."""
+    parts: list[str] = [
+        f'<a class="side-link {"active" if active == "index" else ""}" href="{prefix}index.html">Overview</a>',
+        '<p class="side-label">Leads</p>',
+    ]
+    for c in CHARACTERS:
+        cls = "active" if active == c["slug"] else ""
+        parts.append(
+            f'<a class="side-link {cls}" href="{prefix}{c["slug"]}.html">{escape(_char_nav_label(c))}</a>'
+        )
+    ens_cls = "active" if active == "ensemble" else ""
+    parts.append('<p class="side-label">Ensemble</p>')
+    parts.append(
+        f'<a class="side-link {ens_cls}" href="{prefix}ensemble.html">Ensemble Packages</a>'
+    )
+    return f'<nav class="side-nav" aria-label="Sections">{"".join(parts)}</nav>'
+
+
 def shell(title: str, active: str, body: str, depth: int = 0) -> str:
     prefix = "../" * depth
-    asset_prefix = prefix
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1647,7 +1682,12 @@ def shell(title: str, active: str, body: str, depth: int = 0) -> str:
     <div class="meta">Casting shred · Confidential · 2026-08-05</div>
   </div>
   {nav_html(active, prefix)}
-  {body}
+  <div class="layout">
+    {side_nav_html(active, prefix)}
+    <div class="main">
+      {body}
+    </div>
+  </div>
   <footer class="footer">
     <span>Shredded Lens Studios</span>
     <span>Not for redistribution</span>
@@ -1789,7 +1829,7 @@ def render_character(meta: dict, registry: dict, enrich: dict) -> tuple[str, lis
     <p>{escape(meta['lede'])}</p>
     <div class="cta">
       <a class="btn" href="#shortlists">Shortlists</a>
-      <a class="btn ghost" href="ensemble.html">Ensemble</a>
+      <a class="btn ghost" href="ensemble.html">Ensemble Packages</a>
     </div>
   </div>
   {avatar_html('assets/' + meta['portrait'], 'lg', meta['title'] + ' concept portrait')}
@@ -2184,7 +2224,7 @@ def render_ensemble(registry: dict) -> str:
     <h1>{escape(meta['hero'])}</h1>
     <p>{escape(meta['lede'])}</p>
     <div class="cta">
-      <a class="btn" href="#packages">Packages</a>
+      <a class="btn" href="#packages">Ensemble Packages</a>
       <a class="btn ghost" href="#why-b1">Why B1</a>
       <a class="btn ghost" href="index.html">Overview</a>
     </div>
@@ -2301,7 +2341,7 @@ def render_index() -> str:
     <p class="eyebrow">Shredded Lens · Character &amp; ensemble casting</p>
     <h1>WAR CASTING</h1>
     <p>Confidential shortlists and package architecture for Russell K. Reed’s WAR — High-Contrast Editorial share format.</p>
-    <div class="cta"><a class="btn" href="sheila.html">Open leads</a><a class="btn ghost" href="ensemble.html">Packages</a></div>
+    <div class="cta"><a class="btn" href="sheila.html">Lead Characters</a><a class="btn ghost" href="ensemble.html">Ensemble Packages</a></div>
   </div>
   {avatar_html('assets/characters/char-sheila.png', 'lg', 'Sheila concept portrait')}
 </header>

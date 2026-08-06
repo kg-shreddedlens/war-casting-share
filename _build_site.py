@@ -1117,6 +1117,12 @@ def remote_to_source_page(url: str) -> str:
     bare = u.split("?")[0]
     low = bare.lower()
 
+    # Already a human page (not a raw image CDN file)
+    if not re.search(r"\.(jpe?g|png|webp|gif)$", low) and not any(
+        h in low for h in ("upload.wikimedia.org", "image.tmdb.org", "media.gettyimages.com", "media-amazon.com")
+    ):
+        return bare
+
     if "upload.wikimedia.org" in low:
         path = unquote(bare)
         fname = path.rstrip("/").split("/")[-1]
@@ -1125,9 +1131,11 @@ def remote_to_source_page(url: str) -> str:
             return "https://commons.wikimedia.org/wiki/File:" + quote(fname.replace(" ", "_"))
 
     if "gettyimages.com" in low:
-        m = re.search(r"/id/(\d+)/", bare)
+        m = re.search(r"/id/(\d+)/", bare) or re.search(r"/detail/(?:news-photo|photo)/(\d+)", bare)
         if m:
             return f"https://www.gettyimages.com/detail/news-photo/{m.group(1)}"
+        if "/detail/" in low or "/photos/" in low:
+            return bare
         return "https://www.gettyimages.com/"
 
     if "image.tmdb.org" in low:

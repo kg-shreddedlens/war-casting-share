@@ -71,49 +71,54 @@ def tmdb_profile_urls(tmdb_id: int, slug: str) -> list[str]:
             if u not in urls:
                 urls.append(u)
         time.sleep(0.35)
-    # Wikimedia Commons search (file namespace)
+    return urls
+
+
+def ddg_image_urls(name: str, limit: int = 40) -> list[str]:
+    """DuckDuckGo image results (vqd token flow)."""
+    urls: list[str] = []
     try:
-        q = urllib.parse.urlencode(
-            {
-                "action": "query",
-                "list": "search",
-                "srsearch": slug.replace("-", " "),
-                "srnamespace": 6,
-                "srlimit": 40,
-                "format": "json",
-            }
-        )
-        req = urllib.request.Request(
-            "https://commons.wikimedia.org/w/api.php?" + q,
-            headers={"User-Agent": "ShreddedLensCastingBot/1.3 (casting stills)"},
-        )
-        with urllib.request.urlopen(req, timeout=40) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-        titles = [h["title"] for h in (data.get("query", {}).get("search") or []) if h.get("title")]
-        if titles:
-            q2 = urllib.parse.urlencode(
+        landing = get_text("https://duckduckgo.com/?" + urllib.parse.urlencode({"q": name, "iax": "images", "ia": "images"}))
+        m = re.search(r"vqd(?:=|\\\":\\\")([0-9-]+)", landing)
+        if not m:
+            m = re.search(r"vqd='([0-9-]+)'", landing)
+        if not m:
+            # alternate: html homepage cookie-less
+            html = get_text(
+                "https://duckduckgo.com/i.js?"
+                + urllib.parse.urlencode({"q": f"{name} actress OR actor", "o": "json", "p": "1", "s": "0"})
+            )
+            for u in re.findall(r'"image"\s*:\s*"(https?://[^"]+)"', html):
+                u = u.encode("utf-8").decode("unicode_escape") if "\\u" in u else u
+                if u not in urls:
+                    urls.append(u)
+            return urls[:limit]
+        vqd = m.group(1)
+        api = (
+            "https://duckduckgo.com/i.js?"
+            + urllib.parse.urlencode(
                 {
-                    "action": "query",
-                    "titles": "|".join(titles[:40]),
-                    "prop": "imageinfo",
-                    "iiprop": "url",
-                    "iiurlwidth": 800,
-                    "format": "json",
+                    "l": "us-en",
+                    "o": "json",
+                    "q": name,
+                    "vqd": vqd,
+                    "f": ",,,,,",
+                    "p": "1",
                 }
             )
-            req2 = urllib.request.Request(
-                "https://commons.wikimedia.org/w/api.php?" + q2,
-                headers={"User-Agent": "ShreddedLensCastingBot/1.3 (casting stills)"},
-            )
-            with urllib.request.urlopen(req2, timeout=40) as resp:
-                data2 = json.loads(resp.read().decode("utf-8"))
-            for page in (data2.get("query", {}).get("pages") or {}).values():
-                info = (page.get("imageinfo") or [{}])[0]
-                u = info.get("thumburl") or info.get("url")
-                if u and u not in urls:
-                    urls.append(u)
+        )
+        raw = get_bytes(api, referer="https://duckduckgo.com/").decode("utf-8", "replace")
+        for u in re.findall(r'"image"\s*:\s*"(https?://[^"]+)"', raw):
+            u = bytes(u, "utf-8").decode("unicode_escape") if "\\u" in u else u
+            low = u.lower()
+            if any(x in low for x in ("svg", "logo", "sprite", "icon", "pixel")):
+                continue
+            if u not in urls:
+                urls.append(u)
+            if len(urls) >= limit:
+                break
     except Exception as e:
-        print("  commons fail", e)
+        print("  ddg fail", e)
     return urls
 
 
@@ -158,6 +163,12 @@ def fill_one(name: str, local: dict) -> int:
     tid, slug = hit
     print(f"  tmdb {tid}-{slug}")
     urls = tmdb_profile_urls(tid, slug)
+    if len(urls) < TARGET:
+        extra = ddg_image_urls(name, limit=50)
+        print(f"  ddg +{len(extra)}")
+        for u in extra:
+            if u not in urls:
+                urls.append(u)
     print(f"  urls {len(urls)}")
 
     folder = GAL / slugify(name)
